@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Lounge | Validação de Acesso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #ffffff;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <div class="text-2xl font-bold text-indigo-600 tracking-tight">VIP<span class="text-slate-800">Lounge</span></div>
+            <a href="#" class="text-sm font-medium text-slate-500 hover:text-indigo-600 transition">Fale Conosco</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="flex-grow flex items-center justify-center p-6 relative overflow-hidden">
+        <!-- Background Decor -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div class="absolute -top-40 -right-40 w-96 h-96 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+            <div class="absolute top-40 -left-20 w-72 h-72 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        </div>
+
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-slate-800 mb-2">Bem-vindo</h1>
+                    <p class="text-slate-500">Valide seu acesso exclusivo inserindo seu CPF abaixo.</p>
+                </div>
+
+                <form id="validationForm" class="space-y-6">
+                    <div>
+                        <label for="cpf" class="block text-sm font-medium text-slate-700 mb-1">CPF do Titular</label>
+                        <div class="relative">
+                            <input type="text" id="cpf" name="cpf" 
+                                class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none text-lg tracking-wide placeholder-slate-400"
+                                placeholder="000.000.000-00" maxlength="14" required>
+                            <i class="fas fa-id-card absolute right-4 top-4 text-slate-400"></i>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">Seus dados estão seguros e criptografados.</p>
+                    </div>
+
+                    <button type="submit" id="submitBtn" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 flex justify-center items-center disabled:opacity-70 disabled:cursor-not-allowed">
+                        <span id="btnText">Validar Acesso</span>
+                        <div id="btnSpinner" class="spinner ml-2 hidden"></div>
+                    </button>
+                </form>
+
+                <!-- Feedback Area -->
+                <div id="feedbackMessage" class="mt-6 hidden p-4 rounded-lg text-sm text-center"></div>
+            </div>
+            
+            <div class="bg-slate-50 px-8 py-4 border-t border-slate-100 text-center text-xs text-slate-500">
+                &copy; 2026 VIP Lounge Platform. All rights reserved.
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Sucesso COM ID -->
+    <div id="successModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-center overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border-4 border-green-400">
+                <div class="bg-white px-4 pt-10 pb-8 sm:p-10 sm:pb-8">
+                    <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-green-100 mb-6 animate-bounce">
+                        <i class="fas fa-trophy text-4xl text-green-600"></i>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <h3 class="text-3xl leading-8 font-extrabold text-gray-900 mb-4" id="modal-title">PARABÉNS!</h3>
+                        <div class="mt-2">
+                            <p class="text-xl text-gray-600 font-medium" id="welcomeMessage">Você está participando!</p>
+                            <p class="text-sm text-gray-400 mt-2">Aguarde o sorteio.</p>
+                        </div>
+                        
+                        <!-- SEÇÃO DE ID - PARA DEMONSTRAÇÃO -->
+                        <div class="mt-6 bg-slate-100 rounded-lg p-4 border-2 border-purple-300">
+                            <p class="text-xs text-slate-600 font-semibold mb-2">🆔 ID DO BENEFICIÁRIO</p>
+                            <div class="bg-white rounded border border-purple-200 p-3 text-center">
+                                <p id="userIdDisplay" class="font-mono text-sm text-purple-600 font-bold break-all">Carregando...</p>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2">Este ID será usado para rastreamento no Firestore</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-4 sm:px-6">
+                    <button type="button" onclick="closeModal()" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-4 bg-gray-800 text-lg font-bold text-white hover:bg-gray-900 focus:outline-none transition transform hover:scale-105">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔧 SEÇÃO DE DEBUG - APENAS DESENVOLVIMENTO - SERÁ REMOVIDA NO DEPLOY -->
+    <div id="debugPanel" class="fixed bottom-0 right-0 w-96 max-h-80 bg-slate-900 text-white rounded-tl-lg shadow-2xl overflow-auto border-t-2 border-l-2 border-yellow-400 hidden z-40">
+        <div class="bg-yellow-600 text-white px-4 py-2 font-bold flex justify-between items-center sticky top-0">
+            <span>🔧 DEBUG INFO - DEV ONLY</span>
+            <button onclick="toggleDebugPanel()" class="hover:bg-yellow-700 px-2 py-1 rounded text-sm">✕</button>
+        </div>
+        <div id="debugContent" class="p-4 text-xs font-mono max-h-72 overflow-y-auto">
+            <p class="text-yellow-300 mb-2">Nenhum resultado ainda...</p>
+        </div>
+        <div class="border-t border-slate-700 p-2 flex gap-2">
+            <button onclick="clearDebugInfo()" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs flex-1">
+                Limpar
+            </button>
+            <button onclick="copyDebugInfo()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs flex-1">
+                Copiar JSON
+            </button>
+        </div>
+    </div>
+
+    <!-- Botão de Toggle para Debug -->
+    <button onclick="toggleDebugPanel()" id="debugToggle" class="fixed bottom-4 right-4 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-full shadow-lg text-xs font-bold hidden z-30">
+        🔧 DEBUG
+    </button>
+
+    <script>
+        // Configuração
+        const CONDO_ID = "condo_demo_123"; // Isso viria dinamicamente da URL ou config
+
+        // Máscara de CPF
+        document.getElementById('cpf').addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+            e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+        });
+
+        // Handler do Formulário
+        document.getElementById('validationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const cpf = document.getElementById('cpf').value.replace(/\D/g, ''); // Limpa formatação
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+            const feedback = document.getElementById('feedbackMessage');
+
+            // Reset UI
+            feedback.classList.add('hidden');
+            feedback.className = "mt-6 hidden p-4 rounded-lg text-sm text-center";
+            
+            // Loading State
+            btn.disabled = true;
+            btnText.innerText = "Verificando...";
+            spinner.classList.remove('hidden');
+
+            // Feedback de Loading Avançado
+            const statusEl = document.createElement('p');
+            statusEl.id = 'loadingStatus';
+            statusEl.className = 'text-xs text-center text-slate-500 mt-3 animate-pulse font-medium';
+            if (!document.getElementById('loadingStatus')) {
+                btn.parentElement.after(statusEl);
+            }
+            
+            const messages = [
+                "Conectando à base segura...", 
+                "Verificando condomínios parceiros...",
+                "Consultando registros nacionais...",
+                "Validando status do titular..."
+            ];
+            let msgIdx = 0;
+            statusEl.innerText = messages[0];
+            const msgInterval = setInterval(() => {
+                msgIdx = (msgIdx + 1) % messages.length;
+                statusEl.innerText = messages[msgIdx];
+            }, 1000);
+
+            try {
+                const response = await fetch('/v1/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cpf: cpf, condo_id: CONDO_ID })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.valid) {
+                    // Sucesso
+                    document.getElementById('welcomeMessage').innerText = `Olá, ${data.name || 'Membro'}! ${data.message}`;
+                    
+                    // Mostrar ID
+                    if (data.user_id && data.user_id.trim() !== '') {
+                        document.getElementById('userIdDisplay').innerText = data.user_id;
+                        document.getElementById('userIdDisplay').className = "font-mono text-sm text-purple-600 font-bold break-all";
+                    } else {
+                        document.getElementById('userIdDisplay').innerText = '⏳ ID será gerado e salvo no servidor';
+                        document.getElementById('userIdDisplay').className = "font-mono text-sm text-orange-500 break-all";
+                    }
+                    
+                    // ⚙️ DEBUG: Mostrar resposta completa
+                    showDebugInfo(data);
+                    
+                    document.getElementById('successModal').classList.remove('hidden');
+                } else {
+                    // Erro de Negócio (Rejeitado)
+                    const errorMsg = data.status === 'not_found' 
+                        ? 'Este CPF não faz parte do grupo participante. Verifique o número informado.'
+                        : (data.message || "Acesso não autorizado para este CPF.");
+                    
+                    feedback.innerText = errorMsg;
+                    feedback.classList.remove('hidden');
+                    feedback.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+                }
+
+            } catch (error) {
+                // Erro REAL de rede (Servidor fora do ar)
+                console.error("Erro na requisição:", error);
+                feedback.innerText = "Erro ao conectar com o servidor. Verifique se o backend está rodando.";
+                feedback.classList.remove('hidden');
+                feedback.classList.add('bg-yellow-50', 'text-yellow-700', 'border', 'border-yellow-200');
+            } finally {
+                // Restore UI
+                clearInterval(msgInterval);
+                if(document.getElementById('loadingStatus')) document.getElementById('loadingStatus').remove();
+                
+                btn.disabled = false;
+                btnText.innerText = "Validar Acesso";
+                spinner.classList.add('hidden');
+            }
+        });
+
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+            // Redirecionar ou limpar
+            document.getElementById('cpf').value = '';
+        }
+
+        // ⚙️ FUNÇÕES DE DEBUG - SERÁ REMOVIDO NO DEPLOY
+        let debugData = {};
+
+        function showDebugInfo(data) {
+            debugData = data;
+            const debugPanel = document.getElementById('debugPanel');
+            const debugToggle = document.getElementById('debugToggle');
+            const debugContent = document.getElementById('debugContent');
+
+            // Montar HTML com informações
+            let html = '<div class="space-y-2">';
+            html += '<div class="bg-slate-800 p-2 rounded border border-yellow-500">';
+            html += '<p class="text-yellow-300 font-bold mb-2">✅ RESPOSTA RECEBIDA:</p>';
+            
+            // Status
+            html += `<div><span class="text-blue-400">status:</span> <span class="text-green-400">"${data.status}"</span></div>`;
+            html += `<div><span class="text-blue-400">valid:</span> <span class="text-green-400">${data.valid}</span></div>`;
+            html += `<div><span class="text-blue-400">message:</span> <span class="text-green-400">"${data.message}"</span></div>`;
+            
+            if (data.name) {
+                html += `<div><span class="text-blue-400">name:</span> <span class="text-green-400">"${data.name}"</span></div>`;
+            }
+
+            html += '</div>';
+
+            // Se foi cadastrado com sucesso, mostrar ID
+            if (data.status === 'success' || data.status === 'already_registered') {
+                html += '<div class="bg-slate-800 p-2 rounded border border-purple-500 mt-2">';
+                html += '<p class="text-purple-300 font-bold mb-2">📋 DADOS GUARDADOS NO FIRESTORE:</p>';
+                html += '<div class="bg-slate-900 p-2 rounded text-xs break-all">';
+                html += '<p class="text-orange-300 mb-1">rede_parcerias_user_id:</p>';
+                // Mostrar placeholder já que o frontend não tem acesso ao ID guardado no backend
+                html += '<p class="text-cyan-300 font-bold">🔄 ID será salvo no backend e no Firestore</p>';
+                html += '<p class="text-slate-500 text-xs mt-1">(O ID específico está sendo guardado no servidor)</p>';
+                html += '</div>';
+                html += '</div>';
+
+                // Instruções para deletar
+                if (data.status === 'already_registered') {
+                    html += '<div class="bg-yellow-900 p-2 rounded border border-yellow-600 mt-2">';
+                    html += '<p class="text-yellow-200 font-bold mb-1">🗑️ PARA TESTAR DE NOVO:</p>';
+                    html += '<p class="text-yellow-100 text-xs">1. Vá para Firestore e delete o documento</p>';
+                    html += '<p class="text-yellow-100 text-xs">2. Vá para Rede Parcerias e delete o usuário</p>';
+                    html += '<p class="text-yellow-100 text-xs">3. Execute o formulário novamente</p>';
+                    html += '</div>';
+                }
+            }
+
+            // JSON completo
+            html += '<div class="bg-slate-800 p-2 rounded border border-slate-600 mt-2">';
+            html += '<p class="text-slate-400 font-bold mb-1">📦 JSON COMPLETO:</p>';
+            html += '<pre class="text-xs bg-slate-900 p-1 rounded overflow-x-auto text-slate-300">' + JSON.stringify(data, null, 2) + '</pre>';
+            html += '</div>';
+            
+            html += '</div>';
+
+            debugContent.innerHTML = html;
+
+            // Mostrar painel
+            debugPanel.classList.remove('hidden');
+            debugToggle.classList.remove('hidden');
+        }
+
+        function toggleDebugPanel() {
+            document.getElementById('debugPanel').classList.toggle('hidden');
+        }
+
+        function clearDebugInfo() {
+            debugData = {};
+            document.getElementById('debugContent').innerHTML = '<p class="text-yellow-300 mb-2">Nenhum resultado ainda...</p>';
+            document.getElementById('debugPanel').classList.add('hidden');
+        }
+
+        function copyDebugInfo() {
+            const json = JSON.stringify(debugData, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('✅ JSON copiado para clipboard!');
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+            });
+        }
+    </script>
+</body>
+</html>
+
