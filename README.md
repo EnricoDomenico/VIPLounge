@@ -135,7 +135,7 @@ Abra no navegador: **http://localhost:8080**
 
 ### Fluxo de Validação
 
-1. **Preencher CPF**: Digite o CPF do titular (ex: `00933733844`)
+1. **Preencher CPF**: Digite o CPF do titular (ex: `9999999999`)
 2. **Validar**: Clique em "Validar Acesso"
 3. **Resultado**:
    - ✅ **Success**: CPF encontrado → Novo cadastro no clube
