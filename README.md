@@ -192,7 +192,7 @@ Um painel de debug aparece no canto inferior direito com:
 **Endpoint**: `GET /v2/condor/unidades/index`
 
 ```bash
-curl -X GET "https://api.superlogica.net/v2/condor/unidades/index?idCondominio=-1&pesquisa=00933733844&exibirDadosDosContatos=1" \
+curl -X GET "https://api.superlogica.net/v2/condor/unidades/index?idCondominio=-1&pesquisa=99999999999&exibirDadosDosContatos=1" \
   -H "app_token: YOUR_TOKEN" \
   -H "access_token: YOUR_TOKEN"
 ```
@@ -211,7 +211,7 @@ curl -X POST "https://api.staging.clubeparcerias.com.br/api-client/v1/users" \
   -d '{
     "name": "Nome Completo",
     "email": "email@example.com",
-    "cpf": "00933733844",
+    "cpf": "99999999999",
     "authorized": true
   }'
 ```
@@ -254,7 +254,7 @@ Estrutura de coleções:
 ```json
 {
   "id": "{condoID}_{cpf}",
-  "cpf": "00933733844",
+  "cpf": "99999999999",
   "condo_id": "13",
   "name": "Ailton Geraldo Júnior",
   "email": "tico.agj@gmail.com",
@@ -274,7 +274,7 @@ Estrutura de coleções:
 ### Com Servidor Rodando
 
 1. Abra: `http://localhost:8080`
-2. CPF de teste: `00933733844`
+2. CPF de teste: `99999999999`
 3. Clique "Validar Acesso"
 4. Verifique o resultado
 
@@ -284,7 +284,7 @@ Estrutura de coleções:
 curl -X POST http://localhost:8080/v1/validate \
   -H "Content-Type: application/json" \
   -d '{
-    "cpf": "00933733844",
+    "cpf": "99999999999",
     "condo_id": "13"
   }'
 ```
