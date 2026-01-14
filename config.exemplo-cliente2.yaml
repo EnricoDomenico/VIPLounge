@@ -1,0 +1,69 @@
+# ============================================
+# EXEMPLO DE CONFIGURAÇÃO PARA CLIENTE #2
+# ============================================
+# Copie este arquivo para config-cliente2.yaml
+# e execute: go run cmd/server/main.go
+
+branding:
+  app_name: "Clube Prime"
+  app_logo: "https://example.com/prime-logo.png"
+  company_name: "Prime Benefícios"
+  company_email: "suporte@prime.com"
+  company_phone: "+55 11 3333-3333"
+  theme_color: "FF6B00"        # Laranja
+  secondary_color: "FFB800"    # Ouro
+
+messages:
+  welcome_title: "Acesso Exclusivo"
+  welcome_subtitle: "Digite seu CPF para validar seu acesso ao Clube Prime"
+  cpf_label: "CPF do Titular"
+  cpf_placeholder: "000.000.000-00"
+  submit_button_text: "Validar Acesso Prime"
+  success_title: "APROVADO!"
+  success_message: "Bem-vindo ao Clube Prime! Aproveite seus benefícios exclusivos."
+  already_registered: "Você já é membro Prime. Acesso garantido!"
+  not_found: "CPF não encontrado na base de dados do Clube Prime."
+  error_message: "Erro ao processar sua solicitação. Tente novamente."
+  network_error: "Problema na conexão. Verifique sua internet."
+  security_disclaimer: "Seus dados são criptografados e protegidos."
+  footer_text: "© 2026 Clube Prime. Todos os direitos reservados."
+  contact_text: "Suporte 24h"
+
+behavior:
+  enable_debug_panel: false        # Desabilitado em produção
+  language: "pt-BR"
+  condo_id_required: true          # Exigir ID do condomínio
+  default_condo_id: "primo_001"    # ID padrão
+  redirect_url_on_success: "https://clube-prime.com/dashboard"
+  redirect_url_on_error: "https://clube-prime.com/suporte"
+  show_user_id_in_modal: false     # Não mostrar ID para o usuário
+  auto_close_modal_seconds: 5      # Fechar modal após 5 segundos
+
+validation:
+  allowed_cpf_formats:
+    - "XXX.XXX.XXX-XX"
+    - "XXXXXXXXXXX"
+  max_retries: 5
+  retry_delay_ms: [500, 1000, 2000, 4000, 8000]
+
+security:
+  cors_allowed_origins:
+    - "https://clube-prime.com"
+    - "https://app.clube-prime.com"
+  require_https: true              # HTTPS obrigatório
+  csp_enabled: true
+
+integrations:
+  name_integration:
+    enabled: true
+    type: "superlogica"
+    url: "https://api.superlogica.net/v2/condor"
+    
+  partner_integration:
+    enabled: true
+    type: "rede_parcerias"
+    url: "https://api.staging.clubeparcerias.com.br/api-client/v1"
+
+database:
+  type: "firestore"
+  collection_name: "prime_leads"

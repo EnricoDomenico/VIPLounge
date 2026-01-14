@@ -1,0 +1,74 @@
+# ============================================
+# VIP Lounge - Configuração Agnóstica por Cliente
+# ============================================
+# Este arquivo permite customizar completamente o comportamento
+# da aplicação sem modificar código Go
+
+# BRANDING - Customizar identidade visual
+branding:
+  app_name: "VIP Lounge"
+  app_logo: "https://example.com/logo.png"
+  company_name: "VIP Lounge"
+  company_email: "contato@viplounge.com"
+  company_phone: "+55 11 9999-9999"
+  theme_color: "4f46e5"        # Hex color (indigo-600)
+  secondary_color: "8b5cf6"    # Hex color (purple-500)
+
+# MENSAGENS - Customizar textos em qualquer idioma
+messages:
+  welcome_title: "Bem-vindo"
+  welcome_subtitle: "Valide seu acesso exclusivo inserindo seu CPF abaixo."
+  cpf_label: "CPF do Titular"
+  cpf_placeholder: "000.000.000-00"
+  submit_button_text: "Validar Acesso"
+  success_title: "PARABÉNS!"
+  success_message: "Bem-vindo ao Clube!"
+  already_registered: "Você já está cadastrado em nosso clube de beneficiários!"
+  not_found: "Condomínio não participante ou CPF não encontrado."
+  error_message: "Erro ao cadastrar no clube. Tente novamente."
+  network_error: "Erro ao conectar com o servidor. Verifique sua conexão."
+  security_disclaimer: "Seus dados estão seguros e criptografados."
+  footer_text: "2026 VIP Lounge Platform. All rights reserved."
+  contact_text: "Fale Conosco"
+
+# COMPORTAMENTO - Customizar fluxo de UX
+behavior:
+  enable_debug_panel: true                    # Mostrar painel de debug em dev
+  language: "pt-BR"                          # pt-BR, en-US, es-ES
+  condo_id_required: false                   # Exigir ID do condomínio
+  default_condo_id: ""                       # ID padrão se não requerido
+  redirect_url_on_success: ""                # Redirecionar após sucesso (vazio = sem redirect)
+  redirect_url_on_error: ""                  # Redirecionar em erro
+  show_user_id_in_modal: true                # Mostrar ID do beneficiário no modal
+  auto_close_modal_seconds: 0                # Fechar modal automaticamente (0 = manual)
+
+# VALIDAÇÃO - Customizar regras
+validation:
+  allowed_cpf_formats:
+    - "XXX.XXX.XXX-XX"
+    - "XXXXXXXXXXX"
+  max_retries: 3
+  retry_delay_ms: [1000, 2000, 4000]
+
+# SEGURANÇA - Customizar proteções
+security:
+  cors_allowed_origins:
+    - "*"                                   # Em produção, restrinja a domínios específicos
+  require_https: false                      # Exigir HTTPS em produção
+  csp_enabled: false                        # Content Security Policy
+
+# INTEGRAÇÕES - Customizar provedores de API
+integrations:
+  name_integration:
+    enabled: true
+    type: "superlogica"
+    url: "https://api.superlogica.net/v2/condor"
+  partner_integration:
+    enabled: true
+    type: "rede_parcerias"
+    url: "https://api.staging.clubeparcerias.com.br/api-client/v1"
+
+# DATABASE - Customizar persistência
+database:
+  type: "firestore"              # firestore, postgres, mongodb
+  collection_name: "leads"
