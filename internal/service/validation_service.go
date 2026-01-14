@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/viplounge/platform/internal/config"
 	"github.com/viplounge/platform/internal/domain"
 )
 
@@ -11,13 +12,18 @@ type ValidationService struct {
 	repo      domain.LeadRepository
 	validator domain.BenefValidator
 	partner   domain.PartnerService
+	cfg       *config.Config
 }
 
-func NewValidationService(repo domain.LeadRepository, validator domain.BenefValidator, partner domain.PartnerService) *ValidationService {
+func NewValidationService(repo domain.LeadRepository, validator domain.BenefValidator, partner domain.PartnerService, cfg *config.Config) *ValidationService {
+	if cfg == nil {
+		cfg = config.Get()
+	}
 	return &ValidationService{
 		repo:      repo,
 		validator: validator,
 		partner:   partner,
+		cfg:       cfg,
 	}
 }
 
@@ -57,7 +63,7 @@ func (s *ValidationService) ValidateAndSave(ctx context.Context, req domain.Vali
 			// O usuário vê sucesso pois foi validado na Superlogica
 			leadToSave.RedeParceriasStatus = domain.PartnerStatusRetryPending
 			response.Status = domain.ResponseStatusError
-			response.Message = "Erro ao cadastrar no clube. Tente novamente."
+			response.Message = s.cfg.Messages.ErrorMessage
 		} else {
 			// Se não retornou erro, pode ser sucesso ou já existia (422)
 			leadToSave.RedeParceriasStatus = domain.PartnerStatusRegistered
@@ -65,10 +71,10 @@ func (s *ValidationService) ValidateAndSave(ctx context.Context, req domain.Vali
 			// Verificar se é um caso de "já existe" (422)
 			if leadToSave.RedeParceriasError == "USER_ALREADY_EXISTS (422)" {
 				response.Status = domain.ResponseStatusAlreadyRegistered
-				response.Message = "Você já está cadastrado em nosso clube de beneficiários!"
+				response.Message = s.cfg.Messages.AlreadyRegistered
 			} else {
 				response.Status = domain.ResponseStatusSuccess
-				response.Message = "Bem-vindo ao Clube!"
+				response.Message = s.cfg.Messages.SuccessMessage
 			}
 		}
 
@@ -77,7 +83,7 @@ func (s *ValidationService) ValidateAndSave(ctx context.Context, req domain.Vali
 		leadToSave.Status = domain.StatusRejected
 		leadToSave.SuperlogicaFound = false
 		response.Status = domain.ResponseStatusNotFound
-		response.Message = "Condomínio não participante ou CPF não encontrado."
+		response.Message = s.cfg.Messages.NotFound
 	}
 
 	// 4. Salva no Firestore (se repo estiver disponível)
@@ -89,7 +95,6 @@ func (s *ValidationService) ValidateAndSave(ctx context.Context, req domain.Vali
 	if leadToSave.RedeParceriasUserID != "" {
 		response.UserID = leadToSave.RedeParceriasUserID
 	}
-	// Em produção, usaríamos log estruturado (slog/zap) aqui
 
 	return response, nil
 }

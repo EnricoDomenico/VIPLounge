@@ -139,8 +139,103 @@
     </button>
 
     <script>
-        // Configuração
-        const CONDO_ID = "condo_demo_123"; // Isso viria dinamicamente da URL ou config
+        // ============================================
+        // CONFIGURAÇÃO AGNÓSTICA - LIDA DO SERVIDOR
+        // ============================================
+        let appConfig = {
+            branding: {
+                app_name: "VIP Lounge",
+                theme_color: "4f46e5",
+                secondary_color: "8b5cf6",
+            },
+            messages: {
+                welcome_title: "Bem-vindo",
+                welcome_subtitle: "Valide seu acesso exclusivo inserindo seu CPF abaixo.",
+                cpf_label: "CPF do Titular",
+                cpf_placeholder: "000.000.000-00",
+                submit_button_text: "Validar Acesso",
+                success_title: "PARABÉNS!",
+                success_message: "Bem-vindo ao Clube!",
+                already_registered: "Você já está cadastrado!",
+                not_found: "CPF não encontrado.",
+                error_message: "Erro ao validar.",
+                network_error: "Erro de conexão.",
+            },
+            behavior: {
+                enable_debug_panel: true,
+                default_condo_id: "",
+                show_user_id_in_modal: true,
+            }
+        };
+
+        // Carregar config do servidor na inicialização
+        async function loadConfig() {
+            try {
+                const response = await fetch('/config');
+                if (response.ok) {
+                    const serverConfig = await response.json();
+                    appConfig = {
+                        branding: serverConfig.branding || appConfig.branding,
+                        messages: serverConfig.messages || appConfig.messages,
+                        behavior: serverConfig.behavior || appConfig.behavior,
+                    };
+                    applyConfig();
+                }
+            } catch (e) {
+                console.warn("Usando config padrão (erro ao carregar do servidor)");
+            }
+        }
+
+        // Aplicar configuração ao DOM
+        function applyConfig() {
+            // Título da página
+            document.title = appConfig.branding.app_name + " | Validação de Acesso";
+            
+            // Navbar
+            const navBrand = document.querySelector('.text-2xl.font-bold.text-indigo-600');
+            if (navBrand) {
+                navBrand.textContent = appConfig.branding.app_name;
+                navBrand.style.color = '#' + appConfig.branding.theme_color;
+            }
+            
+            // Mensagens principais
+            document.querySelector('h1').textContent = appConfig.messages.welcome_title;
+            document.querySelector('h1').parentElement.querySelector('p').textContent = appConfig.messages.welcome_subtitle;
+            
+            // Label e placeholder do CPF
+            document.querySelector('label[for="cpf"]').textContent = appConfig.messages.cpf_label;
+            document.getElementById('cpf').placeholder = appConfig.messages.cpf_placeholder;
+            
+            // Botão submit
+            document.getElementById('btnText').textContent = appConfig.messages.submit_button_text;
+            
+            // Cores do tema
+            const style = document.createElement('style');
+            style.textContent = `
+                :root {
+                    --theme-color: #${appConfig.branding.theme_color};
+                    --secondary-color: #${appConfig.branding.secondary_color};
+                }
+                .bg-indigo-600, .hover\\:bg-indigo-700 { 
+                    color: white !important;
+                }
+                .text-indigo-600 {
+                    color: #${appConfig.branding.theme_color} !important;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Debug panel visibility
+            if (!appConfig.behavior.enable_debug_panel) {
+                document.getElementById('debugToggle').style.display = 'none';
+            }
+        }
+
+        // Chamar ao carregar a página
+        document.addEventListener('DOMContentLoaded', loadConfig);
+
+        // Configuração do CONDO_ID
+        const CONDO_ID = appConfig.behavior?.default_condo_id || "condo_demo_123";
 
         // Máscara de CPF
         document.getElementById('cpf').addEventListener('input', function (e) {
@@ -151,7 +246,7 @@
         // Handler do Formulário
         document.getElementById('validationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const cpf = document.getElementById('cpf').value.replace(/\D/g, ''); // Limpa formatação
+            const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
             const btn = document.getElementById('submitBtn');
             const btnText = document.getElementById('btnText');
             const spinner = document.getElementById('btnSpinner');
@@ -166,7 +261,7 @@
             btnText.innerText = "Verificando...";
             spinner.classList.remove('hidden');
 
-            // Feedback de Loading Avançado
+            // Feedback de Loading
             const statusEl = document.createElement('p');
             statusEl.id = 'loadingStatus';
             statusEl.className = 'text-xs text-center text-slate-500 mt-3 animate-pulse font-medium';
@@ -198,26 +293,31 @@
 
                 if (response.ok && data.valid) {
                     // Sucesso
+                    document.getElementById('modal-title').textContent = appConfig.messages.success_title;
                     document.getElementById('welcomeMessage').innerText = `Olá, ${data.name || 'Membro'}! ${data.message}`;
                     
-                    // Mostrar ID
-                    if (data.user_id && data.user_id.trim() !== '') {
-                        document.getElementById('userIdDisplay').innerText = data.user_id;
-                        document.getElementById('userIdDisplay').className = "font-mono text-sm text-purple-600 font-bold break-all";
+                    // Mostrar ID se configurado
+                    if (appConfig.behavior.show_user_id_in_modal) {
+                        if (data.user_id && data.user_id.trim() !== '') {
+                            document.getElementById('userIdDisplay').innerText = data.user_id;
+                            document.getElementById('userIdDisplay').className = "font-mono text-sm text-purple-600 font-bold break-all";
+                        } else {
+                            document.getElementById('userIdDisplay').innerText = '⏳ ID será gerado e salvo no servidor';
+                            document.getElementById('userIdDisplay').className = "font-mono text-sm text-orange-500 break-all";
+                        }
                     } else {
-                        document.getElementById('userIdDisplay').innerText = '⏳ ID será gerado e salvo no servidor';
-                        document.getElementById('userIdDisplay').className = "font-mono text-sm text-orange-500 break-all";
+                        document.querySelector('.mt-6.bg-slate-100').style.display = 'none';
                     }
                     
-                    // ⚙️ DEBUG: Mostrar resposta completa
+                    // Debug
                     showDebugInfo(data);
                     
                     document.getElementById('successModal').classList.remove('hidden');
                 } else {
-                    // Erro de Negócio (Rejeitado)
+                    // Erro de Negócio
                     const errorMsg = data.status === 'not_found' 
-                        ? 'Este CPF não faz parte do grupo participante. Verifique o número informado.'
-                        : (data.message || "Acesso não autorizado para este CPF.");
+                        ? appConfig.messages.not_found
+                        : (data.message || appConfig.messages.error_message);
                     
                     feedback.innerText = errorMsg;
                     feedback.classList.remove('hidden');
@@ -225,43 +325,40 @@
                 }
 
             } catch (error) {
-                // Erro REAL de rede (Servidor fora do ar)
                 console.error("Erro na requisição:", error);
-                feedback.innerText = "Erro ao conectar com o servidor. Verifique se o backend está rodando.";
+                feedback.innerText = appConfig.messages.network_error;
                 feedback.classList.remove('hidden');
                 feedback.classList.add('bg-yellow-50', 'text-yellow-700', 'border', 'border-yellow-200');
             } finally {
-                // Restore UI
                 clearInterval(msgInterval);
                 if(document.getElementById('loadingStatus')) document.getElementById('loadingStatus').remove();
                 
                 btn.disabled = false;
-                btnText.innerText = "Validar Acesso";
+                btnText.innerText = appConfig.messages.submit_button_text;
                 spinner.classList.add('hidden');
             }
         });
 
         function closeModal() {
             document.getElementById('successModal').classList.add('hidden');
-            // Redirecionar ou limpar
             document.getElementById('cpf').value = '';
         }
 
-        // ⚙️ FUNÇÕES DE DEBUG - SERÁ REMOVIDO NO DEPLOY
+        // DEBUG
         let debugData = {};
 
         function showDebugInfo(data) {
             debugData = data;
+            if (!appConfig.behavior.enable_debug_panel) return;
+            
             const debugPanel = document.getElementById('debugPanel');
             const debugToggle = document.getElementById('debugToggle');
             const debugContent = document.getElementById('debugContent');
 
-            // Montar HTML com informações
             let html = '<div class="space-y-2">';
             html += '<div class="bg-slate-800 p-2 rounded border border-yellow-500">';
             html += '<p class="text-yellow-300 font-bold mb-2">✅ RESPOSTA RECEBIDA:</p>';
             
-            // Status
             html += `<div><span class="text-blue-400">status:</span> <span class="text-green-400">"${data.status}"</span></div>`;
             html += `<div><span class="text-blue-400">valid:</span> <span class="text-green-400">${data.valid}</span></div>`;
             html += `<div><span class="text-blue-400">message:</span> <span class="text-green-400">"${data.message}"</span></div>`;
@@ -272,19 +369,16 @@
 
             html += '</div>';
 
-            // Se foi cadastrado com sucesso, mostrar ID
             if (data.status === 'success' || data.status === 'already_registered') {
                 html += '<div class="bg-slate-800 p-2 rounded border border-purple-500 mt-2">';
                 html += '<p class="text-purple-300 font-bold mb-2">📋 DADOS GUARDADOS NO FIRESTORE:</p>';
                 html += '<div class="bg-slate-900 p-2 rounded text-xs break-all">';
                 html += '<p class="text-orange-300 mb-1">rede_parcerias_user_id:</p>';
-                // Mostrar placeholder já que o frontend não tem acesso ao ID guardado no backend
                 html += '<p class="text-cyan-300 font-bold">🔄 ID será salvo no backend e no Firestore</p>';
                 html += '<p class="text-slate-500 text-xs mt-1">(O ID específico está sendo guardado no servidor)</p>';
                 html += '</div>';
                 html += '</div>';
 
-                // Instruções para deletar
                 if (data.status === 'already_registered') {
                     html += '<div class="bg-yellow-900 p-2 rounded border border-yellow-600 mt-2">';
                     html += '<p class="text-yellow-200 font-bold mb-1">🗑️ PARA TESTAR DE NOVO:</p>';
@@ -295,7 +389,6 @@
                 }
             }
 
-            // JSON completo
             html += '<div class="bg-slate-800 p-2 rounded border border-slate-600 mt-2">';
             html += '<p class="text-slate-400 font-bold mb-1">📦 JSON COMPLETO:</p>';
             html += '<pre class="text-xs bg-slate-900 p-1 rounded overflow-x-auto text-slate-300">' + JSON.stringify(data, null, 2) + '</pre>';
@@ -305,7 +398,6 @@
 
             debugContent.innerHTML = html;
 
-            // Mostrar painel
             debugPanel.classList.remove('hidden');
             debugToggle.classList.remove('hidden');
         }

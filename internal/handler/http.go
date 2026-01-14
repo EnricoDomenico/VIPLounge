@@ -8,16 +8,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/viplounge/platform/internal/config"
 	"github.com/viplounge/platform/internal/domain"
 	"github.com/viplounge/platform/internal/service"
 )
 
 type Handler struct {
 	svc *service.ValidationService
+	cfg *config.Config
 }
 
-func NewHandler(svc *service.ValidationService) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *service.ValidationService, cfg *config.Config) *Handler {
+	return &Handler{svc: svc, cfg: cfg}
 }
 
 // Routes define as rotas da aplicação
@@ -28,9 +30,9 @@ func (h *Handler) Routes() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	
-	// Configuração de CORS
+	// Configuração de CORS (agnóstica)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"}, // Em produção, restrinja ao domínio da Landing Page
+		AllowedOrigins:   h.cfg.Security.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},
@@ -41,6 +43,9 @@ func (h *Handler) Routes() http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
+
+	// Novo endpoint: GET /config - retorna configuração para frontend
+	r.Get("/config", h.handleConfig)
 
 	r.Post("/v1/validate", h.handleValidate)
 
@@ -61,7 +66,13 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid CPF format", http.StatusBadRequest)
 		return
 	}
+	
+	// Se condoID não for fornecido, usar default
 	if req.CondoID == "" {
+		req.CondoID = h.cfg.Behavior.DefaultCondoID
+	}
+	
+	if h.cfg.Behavior.CondoIDRequired && req.CondoID == "" {
 		http.Error(w, "Condo ID is required", http.StatusBadRequest)
 		return
 	}
