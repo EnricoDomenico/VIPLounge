@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/viplounge/platform/internal/config"
 	"github.com/viplounge/platform/internal/domain"
+	customMiddleware "github.com/viplounge/platform/internal/middleware"
 	"github.com/viplounge/platform/internal/service"
 )
 
@@ -29,6 +30,7 @@ func (h *Handler) Routes() http.Handler {
 	// Middlewares Básicos
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(customMiddleware.SecurityHeaders)
 	
 	// Configuração de CORS (agnóstica)
 	r.Use(cors.Handler(cors.Options{
@@ -48,6 +50,15 @@ func (h *Handler) Routes() http.Handler {
 	r.Get("/config", h.handleConfig)
 
 	r.Post("/v1/validate", h.handleValidate)
+
+	// Servir arquivos estáticos - images
+	fs := http.FileServer(http.Dir("web"))
+	r.Handle("/images/*", http.StripPrefix("/", fs))
+	
+	// Servir index.html como raiz
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/index.html")
+	})
 
 	return r
 }

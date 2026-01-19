@@ -12,43 +12,51 @@ import (
 type Config struct {
 	// Branding
 	Branding struct {
-		AppName      string `yaml:"app_name"`
-		AppLogo      string `yaml:"app_logo"`
-		CompanyName  string `yaml:"company_name"`
-		CompanyEmail string `yaml:"company_email"`
-		CompanyPhone string `yaml:"company_phone"`
-		ThemeColor   string `yaml:"theme_color"` // hex color
+		AppName        string `yaml:"app_name"`
+		AppSubtitle    string `yaml:"app_subtitle"`
+		AppLogo        string `yaml:"app_logo"`
+		LogoURL        string `yaml:"logo_url"`
+		SideImageURL   string `yaml:"side_image_url"`
+		CompanyName    string `yaml:"company_name"`
+		CompanyEmail   string `yaml:"company_email"`
+		CompanyPhone   string `yaml:"company_phone"`
+		ThemeColor     string `yaml:"theme_color"` // hex color
 		SecondaryColor string `yaml:"secondary_color"`
 	} `yaml:"branding"`
 
 	// Mensagens customizáveis
 	Messages struct {
-		WelcomeTitle       string `yaml:"welcome_title"`
-		WelcomeSubtitle    string `yaml:"welcome_subtitle"`
-		CPFLabel           string `yaml:"cpf_label"`
-		CPFPlaceholder     string `yaml:"cpf_placeholder"`
-		SubmitButtonText   string `yaml:"submit_button_text"`
-		SuccessTitle       string `yaml:"success_title"`
-		SuccessMessage     string `yaml:"success_message"`
-		AlreadyRegistered  string `yaml:"already_registered"`
-		NotFound           string `yaml:"not_found"`
-		ErrorMessage       string `yaml:"error_message"`
-		NetworkError       string `yaml:"network_error"`
-		SecurityDisclaimer string `yaml:"security_disclaimer"`
-		FooterText         string `yaml:"footer_text"`
-		ContactText        string `yaml:"contact_text"`
+		WelcomeMain       string `yaml:"welcome_main"`
+		WelcomeHigh       string `yaml:"welcome_high"`
+		WelcomeSubtext    string `yaml:"welcome_subtext"`
+		CPFLabel          string `yaml:"cpf_label"`
+		CPFPlaceholder    string `yaml:"cpf_placeholder"`
+		FormTitle         string `yaml:"form_title"`
+		SubmitButtonText  string `yaml:"submit_button_text"`
+		ForgotPassword    string `yaml:"forgot_password"`
+		NoAccount         string `yaml:"no_account"`
+		SignupLink        string `yaml:"signup_link"`
+		SuccessTitle      string `yaml:"success_title"`
+		SuccessMessage    string `yaml:"success_message"`
+		SuccessSubtext    string `yaml:"success_subtext"`
+		AlreadyRegistered string `yaml:"already_registered"`
+		NotFound          string `yaml:"not_found"`
+		ErrorMessage      string `yaml:"error_message"`
+		NetworkError      string `yaml:"network_error"`
+		FooterText        string `yaml:"footer_text"`
 	} `yaml:"messages"`
 
 	// Comportamento
 	Behavior struct {
 		EnableDebugPanel      bool   `yaml:"enable_debug_panel"`
-		Language              string `yaml:"language"` // pt-BR, en-US, es-ES
+		Language              string `yaml:"language"`
 		CondoIDRequired       bool   `yaml:"condo_id_required"`
 		DefaultCondoID        string `yaml:"default_condo_id"`
 		RedirectURLOnSuccess  string `yaml:"redirect_url_on_success"`
 		RedirectURLOnError    string `yaml:"redirect_url_on_error"`
 		ShowUserIDInModal     bool   `yaml:"show_user_id_in_modal"`
-		AutoCloseModalSeconds int    `yaml:"auto_close_modal_seconds"` // 0 = manual
+		ShowSideImage         bool   `yaml:"show_side_image"`
+		AutoCloseModalSeconds int    `yaml:"auto_close_modal_seconds"`
 	} `yaml:"behavior"`
 
 	// Validação
@@ -120,37 +128,45 @@ func Get() *Config {
 
 func setDefaults(cfg *Config) {
 	// Branding
-	cfg.Branding.AppName = getEnvOrDefault("APP_NAME", "VIP Lounge")
-	cfg.Branding.CompanyName = getEnvOrDefault("COMPANY_NAME", "VIP Lounge")
-	cfg.Branding.CompanyEmail = getEnvOrDefault("COMPANY_EMAIL", "contato@viplounge.com")
+	cfg.Branding.AppName = getEnvOrDefault("APP_NAME", "mobile")
+	cfg.Branding.AppSubtitle = getEnvOrDefault("APP_SUBTITLE", "Acesso Exclusivo")
+	cfg.Branding.LogoURL = getEnvOrDefault("LOGO_URL", "/images/logo.png")
+	cfg.Branding.SideImageURL = getEnvOrDefault("SIDE_IMAGE_URL", "/images/ParteCondominio.png")
+	cfg.Branding.CompanyName = getEnvOrDefault("COMPANY_NAME", "mobile")
+	cfg.Branding.CompanyEmail = getEnvOrDefault("COMPANY_EMAIL", "contato@mobile.com")
 	cfg.Branding.CompanyPhone = getEnvOrDefault("COMPANY_PHONE", "+55 11 9999-9999")
-	cfg.Branding.ThemeColor = getEnvOrDefault("THEME_COLOR", "4f46e5") // indigo-600
-	cfg.Branding.SecondaryColor = getEnvOrDefault("SECONDARY_COLOR", "8b5cf6") // purple-500
+	cfg.Branding.ThemeColor = getEnvOrDefault("THEME_COLOR", "0066cc")
+	cfg.Branding.SecondaryColor = getEnvOrDefault("SECONDARY_COLOR", "0052a3")
 
 	// Messages (Portuguese as default)
-	cfg.Messages.WelcomeTitle = getEnvOrDefault("MSG_WELCOME_TITLE", "Bem-vindo")
-	cfg.Messages.WelcomeSubtitle = getEnvOrDefault("MSG_WELCOME_SUBTITLE", "Valide seu acesso exclusivo inserindo seu CPF abaixo.")
-	cfg.Messages.CPFLabel = getEnvOrDefault("MSG_CPF_LABEL", "CPF do Titular")
-	cfg.Messages.CPFPlaceholder = getEnvOrDefault("MSG_CPF_PLACEHOLDER", "000.000.000-00")
-	cfg.Messages.SubmitButtonText = getEnvOrDefault("MSG_SUBMIT_BTN", "Validar Acesso")
+	cfg.Messages.WelcomeMain = getEnvOrDefault("MSG_WELCOME_MAIN", "Bem-vindo ao seu")
+	cfg.Messages.WelcomeHigh = getEnvOrDefault("MSG_WELCOME_HIGH", "espaço exclusivo")
+	cfg.Messages.WelcomeSubtext = getEnvOrDefault("MSG_WELCOME_SUBTEXT", "Entre com suas credenciais para acessar")
+	cfg.Messages.CPFLabel = getEnvOrDefault("MSG_CPF_LABEL", "CPF")
+	cfg.Messages.CPFPlaceholder = getEnvOrDefault("MSG_CPF_PLACEHOLDER", "123.456.789-00")
+	cfg.Messages.FormTitle = getEnvOrDefault("MSG_FORM_TITLE", "Área do Condômino")
+	cfg.Messages.SubmitButtonText = getEnvOrDefault("MSG_SUBMIT_BTN", "Entrar")
+	cfg.Messages.ForgotPassword = getEnvOrDefault("MSG_FORGOT_PASSWORD", "Esqueceu sua senha?")
+	cfg.Messages.NoAccount = getEnvOrDefault("MSG_NO_ACCOUNT", "Não tem conta?")
+	cfg.Messages.SignupLink = getEnvOrDefault("MSG_SIGNUP_LINK", "Cadastre-se agora")
 	cfg.Messages.SuccessTitle = getEnvOrDefault("MSG_SUCCESS_TITLE", "PARABÉNS!")
-	cfg.Messages.SuccessMessage = getEnvOrDefault("MSG_SUCCESS_MSG", "Bem-vindo ao Clube!")
-	cfg.Messages.AlreadyRegistered = getEnvOrDefault("MSG_ALREADY_REGISTERED", "Você já está cadastrado em nosso clube de beneficiários!")
-	cfg.Messages.NotFound = getEnvOrDefault("MSG_NOT_FOUND", "Condomínio não participante ou CPF não encontrado.")
-	cfg.Messages.ErrorMessage = getEnvOrDefault("MSG_ERROR", "Erro ao cadastrar no clube. Tente novamente.")
-	cfg.Messages.NetworkError = getEnvOrDefault("MSG_NETWORK_ERROR", "Erro ao conectar com o servidor. Verifique sua conexão.")
-	cfg.Messages.SecurityDisclaimer = getEnvOrDefault("MSG_SECURITY", "Seus dados estão seguros e criptografados.")
-	cfg.Messages.FooterText = getEnvOrDefault("MSG_FOOTER", "2026 VIP Lounge Platform. All rights reserved.")
-	cfg.Messages.ContactText = getEnvOrDefault("MSG_CONTACT", "Fale Conosco")
+	cfg.Messages.SuccessMessage = getEnvOrDefault("MSG_SUCCESS_MSG", "Você está participando!")
+	cfg.Messages.SuccessSubtext = getEnvOrDefault("MSG_SUCCESS_SUBTEXT", "Aguarde o sorteio")
+	cfg.Messages.AlreadyRegistered = getEnvOrDefault("MSG_ALREADY_REGISTERED", "Você já está cadastrado!")
+	cfg.Messages.NotFound = getEnvOrDefault("MSG_NOT_FOUND", "CPF não encontrado.")
+	cfg.Messages.ErrorMessage = getEnvOrDefault("MSG_ERROR", "Erro ao validar.")
+	cfg.Messages.NetworkError = getEnvOrDefault("MSG_NETWORK_ERROR", "Erro de conexão com o servidor.")
+	cfg.Messages.FooterText = getEnvOrDefault("MSG_FOOTER", "Plataforma segura e certificada")
 
 	// Behavior
-	cfg.Behavior.EnableDebugPanel = getEnvOrDefaultBool("ENABLE_DEBUG", true)
+	cfg.Behavior.EnableDebugPanel = getEnvOrDefaultBool("ENABLE_DEBUG", false)
 	cfg.Behavior.Language = getEnvOrDefault("LANGUAGE", "pt-BR")
 	cfg.Behavior.CondoIDRequired = getEnvOrDefaultBool("CONDO_ID_REQUIRED", false)
 	cfg.Behavior.DefaultCondoID = getEnvOrDefault("DEFAULT_CONDO_ID", "")
 	cfg.Behavior.RedirectURLOnSuccess = getEnvOrDefault("REDIRECT_ON_SUCCESS", "")
 	cfg.Behavior.RedirectURLOnError = getEnvOrDefault("REDIRECT_ON_ERROR", "")
-	cfg.Behavior.ShowUserIDInModal = getEnvOrDefaultBool("SHOW_USER_ID", true)
+	cfg.Behavior.ShowUserIDInModal = getEnvOrDefaultBool("SHOW_USER_ID", false)
+	cfg.Behavior.ShowSideImage = getEnvOrDefaultBool("SHOW_SIDE_IMAGE", true)
 	cfg.Behavior.AutoCloseModalSeconds = getEnvOrDefaultInt("AUTO_CLOSE_MODAL_SECONDS", 0)
 
 	// Validation

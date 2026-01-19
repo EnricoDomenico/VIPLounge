@@ -6,40 +6,47 @@
 
 # BRANDING - Customizar identidade visual
 branding:
-  app_name: "VIP Lounge"
-  app_logo: "https://example.com/logo.png"
-  company_name: "VIP Lounge"
-  company_email: "contato@viplounge.com"
+  app_name: "mobile"
+  app_subtitle: "Acesso Exclusivo"
+  logo_url: "/images/logo.png"
+  side_image_url: "/images/ParteCondominio.png"
+  company_name: "mobile"
+  company_email: "contato@mobile.com"
   company_phone: "+55 11 9999-9999"
-  theme_color: "4f46e5"        # Hex color (indigo-600)
-  secondary_color: "8b5cf6"    # Hex color (purple-500)
+  theme_color: "0066cc"        # Hex color (azul)
+  secondary_color: "0052a3"    # Hex color (azul escuro)
 
 # MENSAGENS - Customizar textos em qualquer idioma
 messages:
-  welcome_title: "Bem-vindo"
-  welcome_subtitle: "Valide seu acesso exclusivo inserindo seu CPF abaixo."
-  cpf_label: "CPF do Titular"
-  cpf_placeholder: "000.000.000-00"
-  submit_button_text: "Validar Acesso"
+  welcome_main: "Bem-vindo ao seu"
+  welcome_high: "espaço exclusivo"
+  welcome_subtext: "Entre com suas credenciais para acessar"
+  cpf_label: "CPF"
+  cpf_placeholder: "123.456.789-00"
+  form_title: "Área do Condômino"
+  submit_button_text: "Entrar"
+  forgot_password: "Esqueceu sua senha?"
+  no_account: "Não tem conta?"
+  signup_link: "Cadastre-se agora"
   success_title: "PARABÉNS!"
-  success_message: "Bem-vindo ao Clube!"
-  already_registered: "Você já está cadastrado em nosso clube de beneficiários!"
-  not_found: "Condomínio não participante ou CPF não encontrado."
-  error_message: "Erro ao cadastrar no clube. Tente novamente."
-  network_error: "Erro ao conectar com o servidor. Verifique sua conexão."
-  security_disclaimer: "Seus dados estão seguros e criptografados."
-  footer_text: "2026 VIP Lounge Platform. All rights reserved."
-  contact_text: "Fale Conosco"
+  success_message: "Você está participando!"
+  success_subtext: "Aguarde o sorteio"
+  already_registered: "Você já está cadastrado!"
+  not_found: "CPF não encontrado."
+  error_message: "Erro ao validar."
+  network_error: "Erro de conexão com o servidor."
+  footer_text: "Plataforma segura e certificada"
 
 # COMPORTAMENTO - Customizar fluxo de UX
 behavior:
-  enable_debug_panel: true                    # Mostrar painel de debug em dev
+  enable_debug_panel: false                  # Mostrar painel de debug em dev
   language: "pt-BR"                          # pt-BR, en-US, es-ES
   condo_id_required: false                   # Exigir ID do condomínio
   default_condo_id: ""                       # ID padrão se não requerido
   redirect_url_on_success: ""                # Redirecionar após sucesso (vazio = sem redirect)
   redirect_url_on_error: ""                  # Redirecionar em erro
-  show_user_id_in_modal: true                # Mostrar ID do beneficiário no modal
+  show_user_id_in_modal: false               # Mostrar ID do beneficiário no modal
+  show_side_image: true                      # Mostrar imagem lateral esquerda
   auto_close_modal_seconds: 0                # Fechar modal automaticamente (0 = manual)
 
 # VALIDAÇÃO - Customizar regras

@@ -256,8 +256,8 @@ Estrutura de coleções:
   "id": "{condoID}_{cpf}",
   "cpf": "99999999999",
   "condo_id": "13",
-  "name": "Ailton Geraldo Júnior",
-  "email": "tico.agj@gmail.com",
+  "name": "Lorem Ipsum",
+  "email": "exemplo@gmail.com",
   "status": "APPROVED",
   "superlogica_found": true,
   "superlogica_response_ms": 1150,
@@ -295,7 +295,7 @@ curl -X POST http://localhost:8080/v1/validate \
   "valid": true,
   "status": "success",
   "message": "Bem-vindo ao Clube!",
-  "name": "Ailton Geraldo Júnior",
+  "name": "Lorem Ipsum",
   "user_id": "a0d4fedf-1c6d-4cc8-8f42-cbe9cc961ec4"
 }
 ```
