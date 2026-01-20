@@ -8,23 +8,74 @@
  */
 
 import {setGlobalOptions} from "firebase-functions";
+import {onRequest} from "firebase-functions/v2/https";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+// Configurar opções globais
+setGlobalOptions({region: "us-central1", maxInstances: 100});
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => {...})`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({maxInstances: 10});
+// URL do backend Cloud Run
+const BACKEND_URL = process.env.BACKEND_URL || "https://viplounge-service-dn8vwf3nrq-uc.a.run.app";
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+/**
+ * Proxy Cloud Function - roteia /apiProxy/** para o backend Cloud Run
+ * Tratamento de CORS incluído
+ */
+export const apiProxy = onRequest(
+  {cors: true, maxInstances: 100},
+  async (req, res) => {
+    try {
+      const path = req.path.replace(/^\/apiProxy/, ""); // Remove /apiProxy do início
+      const backendUrl = `${BACKEND_URL}${path}`;
+
+      console.log(`📡 Proxying: ${req.method} ${backendUrl}`);
+
+      // Preparar headers
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      // Copiar authorization se existir
+      if (req.get("authorization")) {
+        headers["Authorization"] = req.get("authorization")!;
+      }
+
+      // Preparar body
+      let body: string | undefined;
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        body = JSON.stringify(req.body);
+      }
+
+      // Fazer requisição para o backend
+      const response = await fetch(backendUrl, {
+        method: req.method,
+        headers,
+        body,
+      });
+
+      // Obter dados da resposta
+      const contentType = response.headers.get("content-type") || "application/json";
+      let data;
+
+      if (contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+
+      // Copiar headers de resposta
+      res.set("Content-Type", contentType);
+      if (response.headers.get("cache-control")) {
+        res.set("Cache-Control", response.headers.get("cache-control")!);
+      }
+
+      // Enviar resposta
+      res.status(response.status).send(data);
+    } catch (error) {
+      console.error("❌ Erro no proxy:", error);
+      res.status(500).json({
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);

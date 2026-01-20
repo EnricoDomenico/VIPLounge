@@ -43,26 +43,19 @@ func (h *Handler) Routes() http.Handler {
 	}))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
 	})
 
 	// Novo endpoint: GET /config - retorna configuração para frontend
 	r.Get("/config", h.handleConfig)
 
-	// Subrouter para /api
-	r.Route("/api", func(apiR chi.Router) {
-		// Health check
-		apiR.Get("/v1/health", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(`{"status":"ok"}`))
-		})
-		
-		// Rotas da validação
-		apiR.Post("/v1/validate", h.handleValidate)
-	})
-	
-	// Rotas antigas (compatibilidade)
+	// Rotas da API - será chamada via Cloud Function proxy de Firebase
 	r.Post("/v1/validate", h.handleValidate)
+	r.Get("/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 
 	// Servir arquivos estáticos - images
 	fs := http.FileServer(http.Dir("web"))
