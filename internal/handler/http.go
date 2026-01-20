@@ -49,7 +49,13 @@ func (h *Handler) Routes() http.Handler {
 	// Novo endpoint: GET /config - retorna configuração para frontend
 	r.Get("/config", h.handleConfig)
 
+	// Rotas da API
 	r.Post("/v1/validate", h.handleValidate)
+	r.Post("/api/v1/validate", h.handleValidate)
+	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 
 	// Servir arquivos estáticos - images
 	fs := http.FileServer(http.Dir("web"))

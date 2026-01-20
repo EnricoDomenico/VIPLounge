@@ -694,14 +694,10 @@
             errorDiv.classList.remove('show');
 
             try {
-                const apiUrl = `${API_CONFIG.BASE_URL}/v1/validate`;
-                const response = await fetch(apiUrl, {
+                const data = await callBackendAPI('validate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cpf: cpf, condo_id: 'condo_demo_123' })
                 });
-
-                const data = await response.json();
 
                 // Ocultar loading
                 loader.classList.remove('show');
