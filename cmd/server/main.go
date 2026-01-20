@@ -56,16 +56,18 @@ func main() {
 	// 4. Roteamento API
 	r := chi.NewRouter()
 	
-	// Mount API routes (Handler contém CORS)
+	// Mount API routes PRIMEIRO (Handler contém CORS)
+	// As rotas /api/* vão direto para o handler
 	r.Mount("/", h.Routes())
 
-	// 5. Servir Frontend Estático
+	// 5. Servir Frontend Estático (fallback para SPA)
 	filesDir := "web" 
 	if _, err := os.Stat(filesDir); os.IsNotExist(err) {
 		filesDir = "../../web"
 	}
 	
-	// Serve static files
+	// Serve static files - DEPOIS das rotas de API
+	// Para evitar que arquivos estáticos interceptem rotas da API
 	fileServer(r, "/", http.Dir(filesDir))
 
 	// 6. Iniciar Servidor

@@ -11,19 +11,16 @@ async function initializeBackend() {
     return 'production';
   })();
 
-  // URLs candidatas
+  // URLs candidatas para o backend
   const candidates = [];
   
   if (environment === 'development') {
     candidates.push('http://localhost:8080');
   } else {
-    // Em produção, tentar descobrir a URL do Cloud Run
-    // Primeiro tenta chamar um endpoint de health local
-    candidates.push(`${window.location.origin}/api`);
-    
-    // Se tiver uma variável global com a URL do backend, usar
+    // Em produção, backend está no Cloud Run
+    // Usar uma URL externa conhecida ou deixar vazio se for local
     if (window.__BACKEND_URL__) {
-      candidates.unshift(window.__BACKEND_URL__);
+      candidates.push(window.__BACKEND_URL__);
     }
   }
 
@@ -35,7 +32,7 @@ async function initializeBackend() {
         mode: 'cors'
       });
       
-      if (response.ok) {
+      if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
         console.log(`✅ Backend encontrado: ${baseUrl}`);
         API = {
           BASE_URL: baseUrl,
@@ -50,11 +47,14 @@ async function initializeBackend() {
   }
 
   // Se nenhuma funcionou, usar a padrão
-  const defaultUrl = environment === 'development' 
-    ? 'http://localhost:8080'
-    : 'https://viplounge-service-dn8vwf3nrq-uc.a.run.app';
+  // Em produção, sem candidatas, significa que o backend está em um domínio externo
+  // ou está como uma cloud function proxy que redireciona
   
-  console.warn(`⚠️  Usando backend padrão: ${defaultUrl}`);
+  let defaultUrl = environment === 'development' 
+    ? 'http://localhost:8080'
+    : ''; // Vazio significa mesmo domínio (Firebase relays)
+  
+  console.warn(`⚠️  Usando backend: ${defaultUrl || 'same-origin'}`);
   API = {
     BASE_URL: defaultUrl,
     API_VERSION: 'v1'
@@ -68,7 +68,14 @@ async function callBackendAPI(endpoint, options = {}) {
     throw new Error('Backend não inicializado. Aguarde...');
   }
 
-  const url = `${API.BASE_URL}/api/${API.API_VERSION}/${endpoint}`;
+  // Construir URL corretamente
+  let url;
+  if (API.BASE_URL) {
+    url = `${API.BASE_URL}/api/${API.API_VERSION}/${endpoint}`;
+  } else {
+    // Same-origin (Firebase redireciona)
+    url = `/api/${API.API_VERSION}/${endpoint}`;
+  }
 
   console.log(`📡 Chamando: ${url}`);
 
@@ -83,10 +90,18 @@ async function callBackendAPI(endpoint, options = {}) {
       mode: 'cors'
     });
 
+    // Verificar se response é JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error(`❌ Resposta não é JSON. Tipo: ${contentType}, Conteúdo: ${text.substring(0, 100)}`);
+      throw new Error(`Resposta inválida: ${contentType}. Esperado application/json`);
+    }
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Erro ${response.status}: ${errorText}`);
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      const errorData = await response.json();
+      console.error(`❌ Erro ${response.status}:`, errorData);
+      throw new Error(`API Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -100,7 +115,7 @@ async function callBackendAPI(endpoint, options = {}) {
 
 // Inicializar no carregamento
 initializeBackend().then(() => {
-  console.log(`🔌 Backend pronto: ${API.BASE_URL}`);
+  console.log(`🔌 Backend pronto: ${API.BASE_URL || 'same-origin'}`);
 });
 
 // Exportar para uso global

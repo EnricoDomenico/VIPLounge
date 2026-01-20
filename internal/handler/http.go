@@ -49,13 +49,20 @@ func (h *Handler) Routes() http.Handler {
 	// Novo endpoint: GET /config - retorna configuração para frontend
 	r.Get("/config", h.handleConfig)
 
-	// Rotas da API
-	r.Post("/v1/validate", h.handleValidate)
-	r.Post("/api/v1/validate", h.handleValidate)
-	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
+	// Subrouter para /api
+	r.Route("/api", func(apiR chi.Router) {
+		// Health check
+		apiR.Get("/v1/health", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"status":"ok"}`))
+		})
+		
+		// Rotas da validação
+		apiR.Post("/v1/validate", h.handleValidate)
 	})
+	
+	// Rotas antigas (compatibilidade)
+	r.Post("/v1/validate", h.handleValidate)
 
 	// Servir arquivos estáticos - images
 	fs := http.FileServer(http.Dir("web"))
