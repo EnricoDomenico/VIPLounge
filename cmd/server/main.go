@@ -57,43 +57,15 @@ func main() {
 	r := chi.NewRouter()
 	
 	// Mount API routes PRIMEIRO (Handler contém CORS)
-	// As rotas /api/* vão direto para o handler
 	r.Mount("/", h.Routes())
 
-	// 5. Servir Frontend Estático (fallback para SPA)
-	filesDir := "web" 
-	if _, err := os.Stat(filesDir); os.IsNotExist(err) {
-		filesDir = "../../web"
-	}
-	
-	// Serve static files - DEPOIS das rotas de API
-	// Para evitar que arquivos estáticos interceptem rotas da API
-	fileServer(r, "/", http.Dir(filesDir))
+	// NÃO montar fileServer aqui - já está no handler
 
 	// 6. Iniciar Servidor
 	log.Printf("🚀 Server '%s' starting on port %s", cfg.Branding.AppName, port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func fileServer(r chi.Router, path string, root http.FileSystem) {
-	if strings.ContainsAny(path, "{}*") {
-		panic("FileServer does not permit any URL parameters.")
-	}
-
-	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
-		path += "/"
-	}
-	path += "*"
-
-	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		rctx := chi.RouteContext(r.Context())
-		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
-		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
-		fs.ServeHTTP(w, r)
-	})
 }
 
 
