@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      FIRESTORE_PROJECT: viplounge-f079a
+      CORS_ORIGINS: https://viplounge-f079a.web.app
+      REQUIRE_HTTPS: "false"
+      ENABLE_DEBUG: "true"
+    volumes:
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    command: ["./server"]
+
+  # Emuladores do Firebase (opcional para testes locais)
+  emulator:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+      - "4000:4000"
+      - "8085:8085"
+    command: sh -c "npm install -g firebase-tools && firebase emulators:start --project=viplounge-f079a"

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mobile - Acesso Exclusivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="api-config.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -693,7 +694,8 @@
             errorDiv.classList.remove('show');
 
             try {
-                const response = await fetch('/v1/validate', {
+                const apiUrl = `${API_CONFIG.BASE_URL}/v1/validate`;
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cpf: cpf, condo_id: 'condo_demo_123' })

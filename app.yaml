@@ -1,0 +1,6 @@
+runtime: go121
+env: standard
+
+handlers:
+- url: /.*
+  script: auto

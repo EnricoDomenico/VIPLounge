@@ -1,0 +1,29 @@
+# This file specifies files that should NOT be uploaded to Google Cloud
+# using gcloud. It follows the same syntax as .gitignore, with the addition of
+# "#!include" directives (which insert the entries of the given .gitignore-style
+# file in this file) and "#!exclude" directives (which exclude the entries
+# of the given .gitignore-style file from this file).
+# For more information, run:
+#   $ gcloud topic gignore
+#
+.gcloudignore
+# If you would like to add a custom .gcloudignore file, use an include
+# directive. For example:
+# #!include:custom.gignore
+#
+# The following files are excluded from the Cloud Build upload:
+#
+node_modules/
+.git
+firebase-debug.log
+.vscode/
+.idea/
+*.local
+.env
+.env.local
+web/
+functions/
+docs/
+images/
+scripts/
+.gitignore

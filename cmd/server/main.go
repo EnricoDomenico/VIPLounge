@@ -56,7 +56,7 @@ func main() {
 	// 4. Roteamento API
 	r := chi.NewRouter()
 	
-	// Mount API routes
+	// Mount API routes (Handler contém CORS)
 	r.Mount("/", h.Routes())
 
 	// 5. Servir Frontend Estático
