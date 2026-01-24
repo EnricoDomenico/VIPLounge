@@ -47,13 +47,15 @@ func NewClient() *RedeParceriasClient {
 	// OPÇÃO 2 (RECOMENDADO): OAuth2 client_credentials - gera token automaticamente
 	clientID := os.Getenv("REDE_PARCERIAS_CLIENT_ID")
 	if clientID == "" {
-		// PRODUÇÃO
+		log.Printf("[WARN] REDE_PARCERIAS_CLIENT_ID não definido! Configure via variável de ambiente no Render.")
+		// Fallback apenas para desenvolvimento local
 		clientID = "a08bba23-53aa-46ad-9565-ce7e1fdb169c"
 	}
 
 	clientSecret := os.Getenv("REDE_PARCERIAS_CLIENT_SECRET")
 	if clientSecret == "" {
-		// PRODUÇÃO
+		log.Printf("[WARN] REDE_PARCERIAS_CLIENT_SECRET não definido! Configure via variável de ambiente no Render.")
+		// Fallback apenas para desenvolvimento local
 		clientSecret = "D9pgDnw3VwqOtij9Y5aU181zXmwOQyuMEWSVZqwh"
 	}
 

@@ -1,0 +1,4 @@
+{
+  "backendUrl": "https://SEU-SERVICO.onrender.com",
+  "_instrucoes": "Renomeie este arquivo para backend-config.json e substitua a URL pela URL real do seu backend no Render"
+}

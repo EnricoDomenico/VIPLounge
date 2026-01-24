@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -30,13 +31,19 @@ func NewBenefAdapter() *SuperlogicaAdapter {
 	
 	appToken := os.Getenv("SUPERLOGICA_APP_TOKEN")
 	if appToken == "" {
+		log.Printf("[WARN] SUPERLOGICA_APP_TOKEN não definido! Configure via variável de ambiente no Render.")
+		// Fallback apenas para desenvolvimento local
 		appToken = "74539367-69b7-432a-934f-8d9050bade0c"
 	}
 
 	accessToken := os.Getenv("SUPERLOGICA_ACCESS_TOKEN")
 	if accessToken == "" {
+		log.Printf("[WARN] SUPERLOGICA_ACCESS_TOKEN não definido! Configure via variável de ambiente no Render.")
+		// Fallback apenas para desenvolvimento local
 		accessToken = "d769811d-2d05-4640-b756-b2bae62318cd"
 	}
+
+	log.Printf("[SUPERLOGICA] Inicializado - URL: %s", url)
 
 	return &SuperlogicaAdapter{
 		apiURL:      url,
