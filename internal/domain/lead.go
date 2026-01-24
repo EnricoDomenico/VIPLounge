@@ -135,12 +135,19 @@ type PartnerService interface {
 	// Verificar se usuário existe
 	FindUserByCPF(ctx context.Context, cpf string) (*PartnerUser, error)
 
-	// Cadastrar novo usuário
+	// Cadastrar novo usuário (com authorized:true)
 	RegisterUser(ctx context.Context, lead *Lead) error
 
 	// Deletar/desativar usuário
 	DeleteUser(ctx context.Context, userID string) error
 
 	// Gerar token SSO para redirecionamento
-	GetSSOToken(ctx context.Context, userID string) (*SSOToken, error)
+	// O userIdentifier pode ser UUID ou EMAIL
+	GetSSOToken(ctx context.Context, userIdentifier string) (*SSOToken, error)
+
+	// RegisterAndGetSSO faz o fluxo completo:
+	// 1. Cadastra usuário (com authorized:true)
+	// 2. Gera SSO Token usando EMAIL
+	// 3. Retorna URL de redirect para login automático
+	RegisterAndGetSSO(ctx context.Context, lead *Lead) (*SSOToken, error)
 }

@@ -41,7 +41,7 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(0, 59, 113, 0.1);
             z-index: 101;
-            padding: 1rem 2rem;
+            padding: 1rem 3rem;
             width: 100%;
         }
 
@@ -49,8 +49,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            /* Removido max-width para ocupar toda a largura */
         }
 
         .logo-section {
@@ -472,6 +472,40 @@
             opacity: 0.9;
         }
 
+        /* Mobili Invite Styles */
+        .mobili-invite {
+            color: #003b71;
+        }
+
+        .mobili-invite h3 {
+            color: #003b71;
+        }
+
+        .mobili-invite p {
+            color: #333;
+            opacity: 1;
+        }
+
+        .mobili-invite-img {
+            max-width: 200px;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+        }
+
+        .mobili-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #0054a6;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .mobili-link:hover {
+            color: #003b71;
+            text-decoration: underline;
+        }
+
         /* COUNTDOWN / REDIRECT */
         .redirect-countdown {
             display: inline-flex;
@@ -488,6 +522,84 @@
         .redirect-countdown .countdown-number {
             font-weight: 700;
             font-size: 1.1rem;
+        }
+
+        /* BENEFIT HIGHLIGHT */
+        .benefit-highlight {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .benefit-highlight .benefit-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .benefit-highlight h3 {
+            color: #92400e;
+            font-size: 1.1rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .benefit-highlight p {
+            color: #78350f;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .confirm-question {
+            font-size: 1.1rem !important;
+            font-weight: 600;
+            color: #003b71;
+            margin-top: 1rem !important;
+        }
+
+        .pulse-btn {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+            }
+            50% { 
+                box-shadow: 0 4px 30px rgba(34, 197, 94, 0.7);
+            }
+        }
+
+        /* COUNTDOWN CIRCLE */
+        .countdown-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+            animation: countdown-pulse 1s ease-in-out infinite;
+        }
+
+        .countdown-circle .countdown-number {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        @keyframes countdown-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .redirect-countdown p {
+            margin: 0;
+            color: #16a34a;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -595,61 +707,85 @@
         </div>
     </div>
 
-    <!-- MODAL: NOVO USUÁRIO (Ativar conta) -->
-    <div class="modal" id="newUserModal">
+    <!-- MODAL: CONFIRMAÇÃO DE BENEFÍCIO -->
+    <div class="modal" id="confirmModal">
         <div class="modal-content">
-            <div class="modal-icon">🎉</div>
-            <h2 class="modal-title">Parabéns!</h2>
-            <p class="modal-message">Você tem direito ao Clube de Benefícios exclusivo do seu condomínio!</p>
+            <div class="modal-icon">🎁</div>
+            <h2 class="modal-title">Você tem direito!</h2>
             
-            <div class="modal-user-info" id="newUserInfo">
-                <p><strong>Nome:</strong> <span id="newUserName">-</span></p>
-                <p><strong>E-mail:</strong> <span id="newUserEmail">-</span></p>
+            <div class="modal-user-info" id="confirmUserInfo">
+                <p><strong>Nome:</strong> <span id="confirmUserName">-</span></p>
+                <p><strong>E-mail:</strong> <span id="confirmUserEmail">-</span></p>
             </div>
 
-            <p class="modal-message">Deseja ativar sua conta agora?</p>
+            <div class="benefit-highlight">
+                <div class="benefit-icon">🏆</div>
+                <h3>Clube de Benefícios Exclusivo</h3>
+                <p>Descontos em farmácias, restaurantes, cinema, viagens e muito mais!</p>
+            </div>
+
+            <p class="modal-message confirm-question">Deseja ativar seu acesso gratuito agora?</p>
             
             <div class="modal-buttons">
-                <button class="submit-btn success" onclick="activateAccount()">
-                    <span class="loader" id="activateLoader"></span>
-                    <span id="activateBtnText">✅ Ativar Minha Conta</span>
+                <button class="submit-btn success pulse-btn" onclick="confirmActivation()">
+                    <span class="loader" id="confirmLoader"></span>
+                    <span id="confirmBtnText">✅ Sim, quero meus benefícios!</span>
                 </button>
-                <button class="submit-btn btn-outline" onclick="closeModal('newUserModal')">Agora não</button>
+                <button class="submit-btn btn-outline" onclick="declineActivation()">Não, obrigado</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: USUÁRIO EXISTENTE (Redirecionando) -->
-    <div class="modal" id="existingUserModal">
+    <!-- MODAL: REDIRECIONANDO -->
+    <div class="modal" id="redirectModal">
         <div class="modal-content">
-            <div class="modal-icon">👋</div>
-            <h2 class="modal-title" id="welcomeBackTitle">Bem-vindo de volta!</h2>
-            <p class="modal-message" id="welcomeBackMessage">Sua conta está ativa. Redirecionando para o Clube...</p>
+            <div class="modal-icon">🚀</div>
+            <h2 class="modal-title" id="redirectTitle">Preparando seu acesso...</h2>
+            <p class="modal-message" id="redirectMessage">Sua conta está sendo ativada. Você será redirecionado para o Clube de Benefícios.</p>
             
             <div class="redirect-countdown">
-                🚀 Redirecionando em <span class="countdown-number" id="countdown">5</span>s
+                <div class="countdown-circle">
+                    <span class="countdown-number" id="countdown">5</span>
+                </div>
+                <p>Redirecionando automaticamente...</p>
             </div>
 
             <div class="modal-buttons" style="margin-top: 1.5rem;">
-                <button class="submit-btn success" onclick="redirectNow()">Ir agora →</button>
+                <button class="submit-btn success" onclick="redirectNow()">Entrar agora →</button>
                 <button class="submit-btn btn-outline" onclick="cancelRedirect()">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: ACESSO REVOGADO -->
+    <!-- MODAL: AGRADECIMENTO (quando não quer) -->
+    <div class="modal" id="declineModal">
+        <div class="modal-content">
+            <div class="modal-icon">👋</div>
+            <h2 class="modal-title">Tudo bem!</h2>
+            <p class="modal-message">
+                Você pode ativar seu benefício a qualquer momento. 
+                Basta inserir seu CPF novamente quando quiser.
+            </p>
+            
+            <div class="modal-buttons">
+                <button class="submit-btn" onclick="closeModal('declineModal')">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ACESSO REVOGADO (só no Clube, não na Superlógica) -->
     <div class="modal" id="revokedModal">
         <div class="modal-content">
             <div class="modal-icon">😔</div>
-            <h2 class="modal-title">Acesso Revogado</h2>
+            <h2 class="modal-title">Me desculpe...</h2>
             <p class="modal-message">
-                Infelizmente, você não consta mais como condômino no sistema. 
-                Seu acesso ao Clube de Benefícios foi suspenso.
+                Você não tem mais acesso ao Clube de Benefícios. 
+                Seu cadastro como condômino não foi encontrado no sistema.
             </p>
             
-            <div class="marketing-placeholder">
-                <h3>🏠 Volte a ser condômino!</h3>
-                <p>Entre em contato com a administração do seu condomínio para regularizar sua situação.</p>
+            <div class="marketing-placeholder" style="background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); border-color: #f0c14b;">
+                <h3>🏠 Volte para a gente!</h3>
+                <p>Entre em contato com a administração do seu condomínio para regularizar sua situação e ter acesso novamente aos benefícios exclusivos.</p>
             </div>
 
             <div class="modal-buttons">
@@ -658,7 +794,7 @@
         </div>
     </div>
 
-    <!-- MODAL: NÃO ENCONTRADO -->
+    <!-- MODAL: NÃO ENCONTRADO (não existe em nenhum sistema) -->
     <div class="modal" id="notFoundModal">
         <div class="modal-content">
             <div class="modal-icon">🔍</div>
@@ -667,9 +803,11 @@
                 Não encontramos seu CPF no sistema de condomínios participantes.
             </p>
             
-            <div class="marketing-placeholder">
-                <h3>🎁 Quer ter acesso aos benefícios?</h3>
-                <p>Converse com o síndico do seu condomínio para participar do programa de benefícios exclusivos!</p>
+            <div class="marketing-placeholder mobili-invite" style="background: linear-gradient(135deg, #e8f4fd 0%, #d1e9f9 100%); border-color: #0054a6;">
+                <img src="/images/mobili-convite.png" alt="Convite Mobili" class="mobili-invite-img" onerror="this.style.display='none'">
+                <h3>🏢 Participe da Mobili!</h3>
+                <p>Fale com o síndico do seu condomínio para que vocês possam fazer parte do programa de benefícios exclusivos da Mobili.</p>
+                <a href="https://mobili.com.br" target="_blank" class="mobili-link">Saiba mais sobre a Mobili →</a>
             </div>
 
             <div class="modal-buttons">
@@ -856,12 +994,18 @@
             console.log('Response:', data);
 
             switch (data.scenario) {
-                case 'new_user':
-                    showNewUserModal(data);
+                case 'existing_user':
+                    // JÁ EXISTE nos dois sistemas → Redireciona DIRETO (sem perguntar)
+                    if (data.redirect_url) {
+                        showRedirectModal(data);
+                    } else {
+                        showConfirmModal(data); // Fallback se não tiver URL
+                    }
                     break;
 
-                case 'existing_user':
-                    showExistingUserModal(data);
+                case 'new_user':
+                    // PRIMEIRO ACESSO → Mostra modal de confirmação
+                    showConfirmModal(data);
                     break;
 
                 case 'revoked_user':
@@ -876,29 +1020,72 @@
         }
 
         // ===== MODAL FUNCTIONS =====
-        function showNewUserModal(data) {
-            document.getElementById('newUserName').textContent = data.name || '-';
-            document.getElementById('newUserEmail').textContent = data.email || '-';
+        
+        // Modal de confirmação (pergunta se quer o benefício)
+        function showConfirmModal(data) {
+            // Limpar nome (remover espaços extras no início)
+            const cleanName = (data.name || '').trim();
+            const firstName = cleanName.split(' ')[0] || 'Usuário';
             
-            // Se já tem SSO, mostrar modal de redirecionamento
-            if (data.redirect_url) {
-                showExistingUserModal(data);
-                return;
-            }
-
-            document.getElementById('newUserModal').classList.add('show');
+            document.getElementById('confirmUserName').textContent = cleanName || '-';
+            document.getElementById('confirmUserEmail').textContent = data.email || '-';
+            
+            document.getElementById('confirmModal').classList.add('show');
         }
 
-        function showExistingUserModal(data) {
-            const title = document.getElementById('welcomeBackTitle');
-            const message = document.getElementById('welcomeBackMessage');
-            
-            if (data.name) {
-                title.textContent = `Bem-vindo, ${data.name.split(' ')[0]}!`;
-            }
-            message.textContent = data.message || 'Sua conta está ativa. Redirecionando...';
+        // Quando confirma que quer o benefício
+        async function confirmActivation() {
+            const loader = document.getElementById('confirmLoader');
+            const btnText = document.getElementById('confirmBtnText');
 
-            document.getElementById('existingUserModal').classList.add('show');
+            loader.classList.add('show');
+            btnText.textContent = 'Ativando seu acesso...';
+
+            // Pequeno delay para mostrar loading
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            loader.classList.remove('show');
+            
+            // Fechar modal de confirmação
+            closeModal('confirmModal');
+            
+            // Mostrar modal de redirecionamento
+            if (currentResponse && currentResponse.redirect_url) {
+                showRedirectModal(currentResponse);
+            } else {
+                // Se não tem redirect_url, mostrar mensagem de sucesso
+                btnText.textContent = '✅ Ativado!';
+                showSuccess('Sua conta foi ativada! Você receberá um e-mail com instruções de acesso.');
+            }
+        }
+
+        // Quando recusa o benefício
+        function declineActivation() {
+            closeModal('confirmModal');
+            document.getElementById('declineModal').classList.add('show');
+        }
+
+        // Modal de redirecionamento (com countdown)
+        function showRedirectModal(data) {
+            const title = document.getElementById('redirectTitle');
+            const message = document.getElementById('redirectMessage');
+            
+            const cleanName = (data.name || '').trim();
+            const firstName = cleanName.split(' ')[0] || '';
+            
+            if (firstName) {
+                title.textContent = `Pronto, ${firstName}!`;
+            } else {
+                title.textContent = 'Pronto!';
+            }
+            
+            if (data.scenario === 'existing_user') {
+                message.textContent = 'Bem-vindo de volta! Redirecionando para o Clube de Benefícios...';
+            } else {
+                message.textContent = 'Sua conta foi ativada com sucesso! Redirecionando para o Clube de Benefícios...';
+            }
+
+            document.getElementById('redirectModal').classList.add('show');
             startCountdown(data.redirect_url);
         }
 
@@ -915,40 +1102,21 @@
             cancelRedirect();
         }
 
-        // ===== ACTIVATE ACCOUNT =====
-        async function activateAccount() {
-            const loader = document.getElementById('activateLoader');
-            const btnText = document.getElementById('activateBtnText');
-
-            loader.classList.add('show');
-            btnText.textContent = 'Ativando...';
-
-            // Simular ativação (já foi feito no backend)
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            loader.classList.remove('show');
-            
-            if (currentResponse && currentResponse.redirect_url) {
-                btnText.textContent = 'Redirecionando...';
-                closeModal('newUserModal');
-                showExistingUserModal(currentResponse);
-            } else {
-                btnText.textContent = '✅ Conta Ativada!';
-                setTimeout(() => {
-                    closeModal('newUserModal');
-                    showSuccess('Sua conta foi ativada! Você receberá um e-mail com instruções de acesso.');
-                }, 1000);
-            }
-        }
-
         // ===== REDIRECT FUNCTIONS =====
         function startCountdown(redirectUrl) {
             let seconds = CONFIG.REDIRECT_DELAY;
             const countdownEl = document.getElementById('countdown');
             
+            // Reset countdown display
+            if (countdownEl) {
+                countdownEl.textContent = seconds;
+            }
+            
             countdownInterval = setInterval(() => {
                 seconds--;
-                countdownEl.textContent = seconds;
+                if (countdownEl) {
+                    countdownEl.textContent = seconds;
+                }
                 
                 if (seconds <= 0) {
                     clearInterval(countdownInterval);

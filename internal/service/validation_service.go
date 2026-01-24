@@ -109,7 +109,7 @@ func (s *ValidationService) ValidateAndSave(ctx context.Context, req domain.Vali
 }
 
 // handleNewUser - CPF na Superlógica, NÃO na Rede Parcerias
-// Ação: Cadastrar e gerar SSO
+// Ação: Cadastrar com authorized:true e gerar SSO imediatamente
 func (s *ValidationService) handleNewUser(ctx context.Context, lead *domain.Lead) *domain.ValidationResponse {
 	response := &domain.ValidationResponse{
 		Valid:              true,
@@ -120,25 +120,35 @@ func (s *ValidationService) handleNewUser(ctx context.Context, lead *domain.Lead
 		ShowActivateButton: true,
 	}
 
-	// Cadastrar na Rede Parcerias
-	if err := s.partner.RegisterUser(ctx, lead); err != nil {
-		log.Printf("[ERRO] Falha ao cadastrar na Rede Parcerias: %v", err)
-		response.Message = "Você tem direito ao benefício! Clique para ativar sua conta."
-		return response
+	// FLUXO COMPLETO: Cadastrar + Gerar SSO em uma única operação
+	// Usa o EMAIL para gerar SSO (mais confiável que depender do ID retornado)
+	sso, err := s.partner.RegisterAndGetSSO(ctx, lead)
+	if err != nil {
+		log.Printf("[ERRO] Falha no RegisterAndGetSSO: %v", err)
+		
+		// Fallback: Se falhou mas tem email, tentar só o SSO
+		if lead.Email != "" {
+			log.Printf("[RETRY] Tentando gerar SSO usando email: %s", lead.Email)
+			sso, err = s.partner.GetSSOToken(ctx, lead.Email)
+			if err != nil {
+				log.Printf("[ERRO] Fallback SSO também falhou: %v", err)
+				response.Message = "Você tem direito ao benefício! Clique para ativar sua conta."
+				return response
+			}
+		} else {
+			response.Message = "Você tem direito ao benefício! Clique para ativar sua conta."
+			return response
+		}
 	}
 
-	// Se cadastrou com sucesso, gerar SSO
-	if lead.RedeParceriasUserID != "" {
-		sso, err := s.partner.GetSSOToken(ctx, lead.RedeParceriasUserID)
-		if err != nil {
-			log.Printf("[WARN] Falha ao gerar SSO: %v", err)
-		} else {
-			response.SSOToken = sso.Token
-			response.RedirectURL = sso.Redirect
-			response.UserID = lead.RedeParceriasUserID
-			response.ShowActivateButton = false
-			response.Message = "Conta ativada com sucesso! Redirecionando..."
-		}
+	// SUCESSO: Preencher resposta com dados do SSO
+	if sso != nil && sso.Redirect != "" {
+		response.SSOToken = sso.Token
+		response.RedirectURL = sso.Redirect
+		response.UserID = lead.RedeParceriasUserID
+		response.ShowActivateButton = false
+		response.Message = "Conta ativada com sucesso! Redirecionando para o Clube de Benefícios..."
+		log.Printf("[SUCESSO] SSO gerado! Redirect: %s", sso.Redirect)
 	}
 
 	lead.Status = domain.StatusApproved
@@ -148,7 +158,7 @@ func (s *ValidationService) handleNewUser(ctx context.Context, lead *domain.Lead
 }
 
 // handleExistingUser - CPF na Superlógica E na Rede Parcerias
-// Ação: Apenas gerar SSO para login
+// Ação: Apenas gerar SSO para login automático
 func (s *ValidationService) handleExistingUser(ctx context.Context, lead *domain.Lead, partnerUser *domain.PartnerUser) *domain.ValidationResponse {
 	response := &domain.ValidationResponse{
 		Valid:    true,
@@ -160,14 +170,36 @@ func (s *ValidationService) handleExistingUser(ctx context.Context, lead *domain
 	}
 
 	// Gerar SSO para login automático
-	sso, err := s.partner.GetSSOToken(ctx, partnerUser.ID)
+	// Tentar primeiro com email (mais confiável), depois com ID
+	ssoIdentifier := partnerUser.Email
+	if ssoIdentifier == "" {
+		ssoIdentifier = partnerUser.ID
+	}
+
+	sso, err := s.partner.GetSSOToken(ctx, ssoIdentifier)
 	if err != nil {
-		log.Printf("[WARN] Falha ao gerar SSO: %v", err)
-		response.Message = "Sua conta está ativa! Acesse o Clube de Benefícios."
-	} else {
+		log.Printf("[WARN] Falha ao gerar SSO com %s: %v", ssoIdentifier, err)
+		
+		// Fallback: tentar com o outro identificador
+		if partnerUser.Email != "" && ssoIdentifier == partnerUser.ID {
+			sso, err = s.partner.GetSSOToken(ctx, partnerUser.Email)
+		} else if partnerUser.ID != "" {
+			sso, err = s.partner.GetSSOToken(ctx, partnerUser.ID)
+		}
+		
+		if err != nil {
+			log.Printf("[ERRO] SSO fallback também falhou: %v", err)
+			response.Message = "Sua conta está ativa! Acesse o Clube de Benefícios."
+			return response
+		}
+	}
+
+	// SUCESSO
+	if sso != nil && sso.Redirect != "" {
 		response.SSOToken = sso.Token
 		response.RedirectURL = sso.Redirect
 		response.Message = fmt.Sprintf("Bem-vindo de volta, %s! Redirecionando...", firstName(lead.Name))
+		log.Printf("[SUCESSO] SSO gerado para usuário existente! Redirect: %s", sso.Redirect)
 	}
 
 	lead.Status = domain.StatusApproved
