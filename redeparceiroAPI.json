@@ -1,0 +1,2032 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RedeParcerias",
+    "version": "0.0.1",
+    "description": "Essa é a **API** do clube de vantagens"
+  },
+  "servers": [
+    {
+      "url": "https://api.staging.clubeparcerias.com.br/api-client/v1"
+    }
+  ],
+  "security": [
+    {
+      "http": []
+    }
+  ],
+  "paths": {
+    "/auth": {
+      "post": {
+        "operationId": "api-client.",
+        "description": "Gera um token de acesso para a API com expiração de 1 ano",
+        "summary": "Gerar Token",
+        "tags": [
+          "Autenticação",
+          "AccessToken"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "enum": [
+                      "client_credentials"
+                    ]
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "Substitua SEU_CLIENT_ID pela sua credencial client_id",
+                    "example": "SEU_CLIENT_ID"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "Substitua SEU_CLIENT_SECRET pela sua credencial client_secret",
+                    "example": "SEU_CLIENT_SECRET"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "*"
+                    ]
+                  }
+                },
+                "required": [
+                  "grant_type",
+                  "client_id",
+                  "client_secret",
+                  "scope"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "access_token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "token_type",
+                    "expires_in",
+                    "access_token"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/sso-token": {
+      "get": {
+        "operationId": "sso.ssoToken",
+        "description": "Este recurso é especialmente útil em cenários onde o parceiro deseja oferecer uma experiência mais fluida ao usuário final, evitando múltiplos logins. O token gerado autentica automaticamente o usuário e o redireciona para o conteúdo desejado dentro do clube, como um benefício específico mencionado em uma campanha.\n- Para a página inicial (Home): Use o redirect retornado na requisição.\n- Para outras páginas: Adicione o parâmetro sso-token à URL da página desejada, como no exemplo abaixo:\n     - https://club_domain.com.br/beneficio/amazon?sso-token={{ssoToken}}",
+        "summary": "Gerar Token SSO",
+        "tags": [
+          "Autenticação",
+          "Sso"
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "description": "id ou identifier do usuário",
+            "schema": {
+              "type": "string"
+            },
+            "example": "9b98a04f-3440-4a51-a59a-9e1653967697 ou member@mail.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "1|cPWyw6EpnJjNFIwRZaZ1zkQlI8j0Kc7ZNXP1EIb24ec5bbba"
+                    },
+                    "redirect": {
+                      "type": "string",
+                      "example": "https://club_domain/sso-auth?token=1|cPWyw6EpnJjNFIwRZaZ1zkQlI8j0Kc7ZNXP1EIb24ec5bbba"
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "redirect"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/users/authorize": {
+      "post": {
+        "operationId": "member.authorizeMember",
+        "summary": "Autorizar Beneficiário",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/users/unauthorized": {
+      "post": {
+        "operationId": "member.unauthorizedMember",
+        "summary": "Desautorizar Beneficiário",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Membro excluído da lista de autorizados com sucesso"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Membro não encontrado na lista de autorizados"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Erro ao deletar membro da lista de autorizados"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "api-client.users.index",
+        "description": "Lista os beneficiários",
+        "summary": "Beneficiários",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limita a quantidade de registros retornados",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Paginação (default: 1)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Termo de busca (somente para título de registros), min de 4 caracteres, max 100 caracteres",
+            "schema": {
+              "type": "string"
+            },
+            "example": "amazon"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Ordenação (default: null)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "priority:ASC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "email": {
+                              "type": "string"
+                            },
+                            "phone": {
+                              "type": "string"
+                            },
+                            "cellphone": {
+                              "type": "string"
+                            },
+                            "birth_date": {
+                              "type": "string"
+                            },
+                            "newsletter": {
+                              "type": "integer"
+                            },
+                            "whatsapp": {
+                              "type": "integer"
+                            },
+                            "sms": {
+                              "type": "integer"
+                            },
+                            "active": {
+                              "type": "boolean"
+                            },
+                            "identifier": {
+                              "type": "string"
+                            },
+                            "cpf": {
+                              "type": "string"
+                            },
+                            "cep": {
+                              "type": "string"
+                            },
+                            "state": {
+                              "type": "string"
+                            },
+                            "city": {
+                              "type": "string"
+                            },
+                            "neighborhood": {
+                              "type": "string"
+                            },
+                            "street": {
+                              "type": "string"
+                            },
+                            "complement": {
+                              "type": "string"
+                            },
+                            "number": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "updated_at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "email",
+                            "phone",
+                            "cellphone",
+                            "birth_date",
+                            "newsletter",
+                            "whatsapp",
+                            "sms",
+                            "active",
+                            "identifier",
+                            "cpf",
+                            "cep",
+                            "state",
+                            "city",
+                            "neighborhood",
+                            "street",
+                            "complement",
+                            "number",
+                            "created_at",
+                            "updated_at"
+                          ]
+                        }
+                      ],
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "additionalItems": false
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "currentPage": {
+                          "type": "integer"
+                        },
+                        "hasPreviousPage": {
+                          "type": "boolean"
+                        },
+                        "hasNextPage": {
+                          "type": "boolean"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "currentPage",
+                        "hasPreviousPage",
+                        "hasNextPage",
+                        "pages",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "api-client.users.store",
+        "summary": "Cadastrar Beneficiário",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "minLength": 10,
+                    "maxLength": 80
+                  },
+                  "birth_date": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "example": "01/01/2000"
+                  },
+                  "newsletter": {
+                    "type": "boolean"
+                  },
+                  "sms": {
+                    "type": "boolean"
+                  },
+                  "whatsapp": {
+                    "type": "boolean"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "example": "123.456.789-09 or 12345678909",
+                    "maxLength": 11
+                  },
+                  "authorized": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Se passar como true, será cadastrado automaticamente na lista de beneficiários"
+                  },
+                  "cellphone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "example": "(99) 99999-9999",
+                    "maxLength": 15
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "cpf"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Erro ao cadastrar beneficiário"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "api-client.users.show",
+        "summary": "Visualizar Beneficiário",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "cellphone": {
+                      "type": "string"
+                    },
+                    "birth_date": {
+                      "type": "string"
+                    },
+                    "newsletter": {
+                      "type": "integer"
+                    },
+                    "whatsapp": {
+                      "type": "integer"
+                    },
+                    "sms": {
+                      "type": "integer"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "identifier": {
+                      "type": "string"
+                    },
+                    "cpf": {
+                      "type": "string"
+                    },
+                    "cep": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "city": {
+                      "type": "string"
+                    },
+                    "neighborhood": {
+                      "type": "string"
+                    },
+                    "street": {
+                      "type": "string"
+                    },
+                    "complement": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "phone",
+                    "cellphone",
+                    "birth_date",
+                    "newsletter",
+                    "whatsapp",
+                    "sms",
+                    "active",
+                    "identifier",
+                    "cpf",
+                    "cep",
+                    "state",
+                    "city",
+                    "neighborhood",
+                    "street",
+                    "complement",
+                    "number",
+                    "created_at",
+                    "updated_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "api-client.users.update",
+        "summary": "Atualizar Beneficiário",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "minLength": 10,
+                    "maxLength": 80
+                  },
+                  "identifier": {
+                    "type": "string"
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "example": "123.456.789-09 or 12345678909",
+                    "maxLength": 11
+                  },
+                  "cellphone": {
+                    "type": "string",
+                    "example": "(99) 99999-9999",
+                    "maxLength": 15
+                  },
+                  "birth_date": {
+                    "type": "string",
+                    "example": "01/01/2000"
+                  },
+                  "cep": {
+                    "type": "string"
+                  },
+                  "number": {
+                    "type": "string",
+                    "maxLength": 11
+                  },
+                  "complement": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "neighborhood": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "city": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "state": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "country": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 20
+                  },
+                  "newsletter": {
+                    "type": "boolean"
+                  },
+                  "sms": {
+                    "type": "boolean"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "whatsapp": {
+                    "type": "boolean"
+                  },
+                  "password_confirmation": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 20
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "api-client.users.destroy",
+        "summary": "Deletar Beneficiário",
+        "tags": [
+          "Beneficiários",
+          "Member"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Beneficiário excluído com sucesso"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Beneficiário não encontrado"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Erro ao deletar beneficiário"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers": {
+      "get": {
+        "operationId": "api-client.offers.index",
+        "description": "Essa rota possui cache de 1 hora",
+        "summary": "Listar Benefícios",
+        "tags": [
+          "Benefícios",
+          "Offer"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limita a quantidade de registros retornados",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Paginação (default: 1)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "Id da localização (buscar através da rota api-client/v1/locations)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "568f5f28-2fd7-11ee-be56-0242ac120002"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Termo de busca (somente para título de registros), min de 4 caracteres, max 100 caracteres",
+            "schema": {
+              "type": "string"
+            },
+            "example": "amazon"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Ordenação (default: null)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "priority:ASC"
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "description": "array de ids de categorias (buscar através da rota api-client/v1/categories)",
+            "schema": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "minItems": 1,
+              "maxItems": 3
+            },
+            "example": [
+              "41eecc44-1695-4714-9205-a3afbf2e670b"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "benefit": {
+                              "type": "string"
+                            },
+                            "resume": {
+                              "type": "string"
+                            },
+                            "slug": {
+                              "type": "string"
+                            },
+                            "cover": {
+                              "type": "string"
+                            },
+                            "priority": {
+                              "type": "integer"
+                            },
+                            "highlight_color": {
+                              "type": "string"
+                            },
+                            "blocked": {
+                              "type": [
+                                "boolean",
+                                "null"
+                              ]
+                            },
+                            "created_at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "title",
+                            "benefit",
+                            "resume",
+                            "slug",
+                            "cover",
+                            "priority",
+                            "highlight_color",
+                            "blocked",
+                            "created_at"
+                          ]
+                        }
+                      ],
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "additionalItems": false
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "currentPage": {
+                          "type": "integer"
+                        },
+                        "hasPreviousPage": {
+                          "type": "boolean"
+                        },
+                        "hasNextPage": {
+                          "type": "boolean"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "currentPage",
+                        "hasPreviousPage",
+                        "hasNextPage",
+                        "pages",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "api-client.offers.store",
+        "summary": "Criar Benefício Local",
+        "tags": [
+          "Benefícios",
+          "Offer"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "cover": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "cover deve ser a imagem da logo do benefício",
+                    "maxLength": 2048
+                  },
+                  "link_url": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 65535
+                  },
+                  "benefit": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "resume": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "visibility": {
+                    "type": "boolean"
+                  },
+                  "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 255
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "description": "start_date",
+                    "example": "01/01/2000"
+                  },
+                  "end_date": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "end_date deve ser maior ou igual a start_date",
+                    "example": "01/01/2000"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "online",
+                      "local",
+                      "mixed",
+                      "giftcard"
+                    ]
+                  },
+                  "banner": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "binary",
+                    "maxLength": 2048
+                  },
+                  "mobile_banner": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "binary",
+                    "maxLength": 2048
+                  },
+                  "contact_email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "maxLength": 255
+                  },
+                  "contact_phone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 20
+                  },
+                  "instagram_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "facebook_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "twitter_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "tiktok_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "rescue_text": {
+                    "type": "string"
+                  },
+                  "conditions_text": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "highlight_background_color": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 255
+                  },
+                  "crm_voucher_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "voucher_content": {
+                    "type": "string",
+                    "maxLength": 1800
+                  },
+                  "contact_address": {
+                    "type": "string",
+                    "maxLength": 1800
+                  },
+                  "show_card": {
+                    "type": "boolean"
+                  },
+                  "categories": {
+                    "type": "array",
+                    "description": "array de ids de categorias (buscar através da rota api-client/v1/categories)",
+                    "example": [
+                      "41eecc44-1695-4714-9205-a3afbf2e670b"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "minItems": 1
+                  },
+                  "locations": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "description": "array de ids de locations (buscar através da rota api-client/v1/locations)",
+                    "example": [
+                      "41eecc44-1695-4714-9205-a3afbf2e670b"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "tags": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "cover",
+                  "description",
+                  "benefit",
+                  "resume",
+                  "visibility",
+                  "start_date",
+                  "type",
+                  "rescue_text",
+                  "categories"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/offers/{slug}": {
+      "get": {
+        "operationId": "api-client.offers.show",
+        "description": "Essa rota possui cache de 1 hora",
+        "summary": "Detalhes do Benefício",
+        "tags": [
+          "Benefícios",
+          "Offer"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "cover": {
+                      "type": "string"
+                    },
+                    "start_date": {
+                      "type": "string"
+                    },
+                    "end_date": {
+                      "type": "string"
+                    },
+                    "visibility": {
+                      "type": "integer"
+                    },
+                    "priority": {
+                      "type": "integer"
+                    },
+                    "resume": {
+                      "type": "string"
+                    },
+                    "benefit": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "rescue_text": {
+                      "type": "string"
+                    },
+                    "conditions_text": {
+                      "type": "string"
+                    },
+                    "contact_email": {
+                      "type": "string"
+                    },
+                    "contact_phone": {
+                      "type": "string"
+                    },
+                    "contact_address": {
+                      "type": "string"
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "slug"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "slug",
+                    "cover",
+                    "start_date",
+                    "end_date",
+                    "visibility",
+                    "priority",
+                    "resume",
+                    "benefit",
+                    "type",
+                    "description",
+                    "rescue_text",
+                    "conditions_text",
+                    "contact_email",
+                    "contact_phone",
+                    "contact_address",
+                    "categories"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers/{id}": {
+      "put": {
+        "operationId": "api-client.offers.update",
+        "summary": "Atualizar Benefício Local",
+        "tags": [
+          "Benefícios",
+          "Offer"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "cover": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "cover deve ser a imagem da logo do benefício",
+                    "maxLength": 2048
+                  },
+                  "link_url": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "benefit": {
+                    "type": "string"
+                  },
+                  "resume": {
+                    "type": "string"
+                  },
+                  "visibility": {
+                    "type": "boolean"
+                  },
+                  "priority": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 255
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "description": "start_date deve ser maior ou igual a data de hoje",
+                    "example": "01/01/2000"
+                  },
+                  "end_date": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "end_date deve ser maior ou igual a start_date",
+                    "example": "01/01/2000"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "online",
+                      "local",
+                      "mixed",
+                      "giftcard"
+                    ]
+                  },
+                  "banner": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "binary",
+                    "maxLength": 2048
+                  },
+                  "contact_email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "email",
+                    "maxLength": 255
+                  },
+                  "contact_phone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 20
+                  },
+                  "instagram_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "facebook_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "twitter_link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "rescue_text": {
+                    "type": "string"
+                  },
+                  "conditions_text": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 150
+                  },
+                  "highlight_background_color": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "crm_voucher_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "voucher_content": {
+                    "type": "string",
+                    "maxLength": 1800
+                  },
+                  "contact_address": {
+                    "type": "string",
+                    "maxLength": 1800
+                  },
+                  "show_card": {
+                    "type": "boolean"
+                  },
+                  "invert_location_filter": {
+                    "type": "boolean"
+                  },
+                  "categories": {
+                    "type": "array",
+                    "description": "array de ids de categorias (buscar através da rota api-client/v1/categories)",
+                    "example": [
+                      "41eecc44-1695-4714-9205-a3afbf2e670b"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "minItems": 1
+                  },
+                  "locations": {
+                    "type": "array",
+                    "description": "array de ids de locations (buscar através da rota api-client/v1/locations)",
+                    "example": [
+                      "41eecc44-1695-4714-9205-a3afbf2e670b"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Benefício local não encontrado. Só é permitido atualizar benefícios locais."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "api-client.offers.destroy",
+        "summary": "Deletar Benefício Local",
+        "tags": [
+          "Benefícios",
+          "Offer"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Benefício excluído com sucesso"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/locations": {
+      "get": {
+        "operationId": "general.locations",
+        "description": "Lista todas as localidades (sem paginação)",
+        "summary": "Localidades",
+        "tags": [
+          "Geral",
+          "General"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "parent_id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "slug",
+                        "parent_id",
+                        "children"
+                      ]
+                    }
+                  ],
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "additionalItems": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "general.categories",
+        "description": "Lista as categorias",
+        "summary": "Categorias",
+        "tags": [
+          "Geral",
+          "General"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limita a quantidade de categorias retornadas (default: 12)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Paginação (default: 1)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "slug": {
+                              "type": "string"
+                            },
+                            "icon": {
+                              "type": "string"
+                            },
+                            "background_color": {
+                              "type": "string"
+                            },
+                            "deleted_at": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "title",
+                            "slug",
+                            "icon",
+                            "background_color",
+                            "deleted_at"
+                          ]
+                        }
+                      ],
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "additionalItems": false
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "currentPage": {
+                          "type": "integer"
+                        },
+                        "hasPreviousPage": {
+                          "type": "boolean"
+                        },
+                        "hasNextPage": {
+                          "type": "boolean"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "currentPage",
+                        "hasPreviousPage",
+                        "hasNextPage",
+                        "pages",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/banners": {
+      "get": {
+        "operationId": "general.banners",
+        "description": "Lista os banners ativos",
+        "summary": "Banners",
+        "tags": [
+          "Geral",
+          "General"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "attachment": {
+                          "type": "string"
+                        },
+                        "mobile_attachment": {
+                          "type": "string"
+                        },
+                        "priority": {
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "link": {
+                          "type": "string"
+                        },
+                        "blocked": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "attachment",
+                        "mobile_attachment",
+                        "priority",
+                        "title",
+                        "link",
+                        "blocked",
+                        "type"
+                      ]
+                    }
+                  ],
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "additionalItems": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "http": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "ValidationException": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Errors overview."
+                },
+                "errors": {
+                  "type": "object",
+                  "description": "A detailed description of each field that failed validation.",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "message",
+                "errors"
+              ]
+            }
+          }
+        }
+      },
+      "ModelNotFoundException": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Error overview."
+                }
+              },
+              "required": [
+                "message"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
