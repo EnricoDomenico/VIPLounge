@@ -61,8 +61,15 @@ func (h *Handler) Routes() http.Handler {
 	fs := http.FileServer(http.Dir("web"))
 	r.Handle("/images/*", http.StripPrefix("/", fs))
 	
+	// Servir api-config.js com MIME type correto
+	r.Get("/api-config.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeFile(w, r, "web/api-config.js")
+	})
+	
 	// Servir index.html como raiz
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		http.ServeFile(w, r, "web/index.html")
 	})
 

@@ -1,21 +1,44 @@
 // VIP Lounge - Backend Configuration
+// Estratégia agnóstica para múltiplos ambientes
 
 let BACKEND_URL = null;
 
-// Detectar ambiente
+// Detectar ambiente de execução
 function getEnvironment() {
   const hostname = window.location.hostname;
-  return (hostname === 'localhost' || hostname === '127.0.0.1') ? 'development' : 'production';
+  const port = window.location.port;
+  
+  // Firebase Emulators (porta 5000 padrão)
+  if (port === '5000' || port === '4000') {
+    return 'emulator';
+  }
+  
+  // Desenvolvimento local direto
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'development';
+  }
+  
+  // Produção (domínio real)
+  return 'production';
 }
 
 // Carregar configuração do backend
 async function loadBackendConfig() {
   const env = getEnvironment();
   
+  if (env === 'emulator') {
+    // Firebase Emulators - usar same-origin (hosting faz proxy)
+    BACKEND_URL = window.location.origin;
+    console.log(`✅ Ambiente: FIREBASE EMULATORS`);
+    console.log(`✅ Backend: ${BACKEND_URL} (via proxy)`);
+    console.log(`ℹ️  Hosting porta ${window.location.port} → Backend localhost:8081`);
+    return;
+  }
+  
   if (env === 'development') {
-    // Localhost - chamar backend local
-    BACKEND_URL = 'http://localhost:8081';
-    console.log(`✅ Ambiente: DESENVOLVIMENTO`);
+    // Desenvolvimento direto - backend standalone
+    BACKEND_URL = 'http://localhost:8080';
+    console.log(`✅ Ambiente: DESENVOLVIMENTO DIRETO`);
     console.log(`✅ Backend: ${BACKEND_URL}`);
     return;
   }

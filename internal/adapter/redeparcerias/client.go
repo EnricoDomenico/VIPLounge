@@ -10,17 +10,23 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/viplounge/platform/internal/domain"
 )
 
 // RedeParceriasClient integra com a API de Clube de Benefícios
-// Usa Bearer Token JWT para autenticação
 type RedeParceriasClient struct {
 	baseURL      string
-	bearerToken  string
+	clientID     string
+	clientSecret string
 	httpClient   *http.Client
+	
+	// Cache do token
+	tokenMu    sync.RWMutex
+	token      string
+	tokenExp   time.Time
 }
 
 func NewClient() *RedeParceriasClient {
@@ -29,145 +35,291 @@ func NewClient() *RedeParceriasClient {
 		url = "https://api.staging.clubeparcerias.com.br/api-client/v1"
 	}
 
-	token := os.Getenv("REDE_PARCERIAS_BEARER_TOKEN")
-	if token == "" {
-		// Token padrão (mudar em .env para produção)
-		token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJhMDhiYjYyMS05YmZjLTQ2ZTQtYWU1ZC1lYTdlNzY2MTBhOWMiLCJqdGkiOiJmNDE3NDIzOWQzOTJkYTJlMzdmMzQzNTA1MjJiZWI5ODJiYzc0ZWY3NGM3OWE0MTkwMGZlODI2ODU0ZGI1NWMyNTdlYzk0ZWE5NGM4MWM5MCIsImlhdCI6MTc2ODI1MDk2Ni43NjU1MTYsIm5iZiI6MTc2ODI1MDk2Ni43NjU1MiwiZXhwIjoxNzk5Nzg2OTY2Ljc1NzM5NSwic3ViIjoiIiwic2NvcGVzIjpbIioiXX0.VWv2FN_LKsKB0YEJwrCtAO3BlOxylCKH5cX3gEuicw4kaK-UhZ419mHk6yXCLM0Sy7Qjvcn4Ps9bPCH3ndP1cA8WY0a_4qg2OnsX-6qPR_9HsNrm55S5lXHG1DGZ4hzKFl26dqo6E80WwdBVD3cL97P2eEoYYONhZqLdjdVPopcLVK6dvhL5sC2zXPtQ1VInKa8aVyHtQPxUN1G8fw1BkjHyQ-SBoV2Q8OAzX_HYI47qDsOPmgbaaAXLVI_VJRuTDhjEHmc5DbDByESx3NCxjWE0vUPaZNBWtoBYymjDJFm_Rc6todZGF_uPdD9XCOVx4Lj50HF4-XU8WZ29sfm1vEX0huuu0-1BnUiLLeizFJnO0K0UhGscf7yYFxp_QV7cKqrRP39efn980F3qJZbmDKg-_cC4Bogj7sFbxVURoY69ffpSFUksf61UEu_c4QHb60JwR_Z_M03YHDnR90GvZ0kvdpavOs85ADE0dNfeHvvHOEfJBDsJHfhyEimjL0n1Oj9BwD-xebw7OEwD3MbEmf5HKYqxjphwo0cUKZoIEMoWqOQkqmys5oiggNfTJ_lAbYBEPNkIX0zKMJxpCSMdhwUlp3gVt81CpfLDxjqxsJqypjJ0jmTIpvAPV0hkvHXxjcQGZYgG62ChqQqFmsYaF0TEFwEdoGRvqPb4RxsB6K4"
+	clientID := os.Getenv("REDE_PARCERIAS_CLIENT_ID")
+	if clientID == "" {
+		clientID = "a08bb621-9bfc-46e4-ae5d-ea7e76610a9c"
+	}
+
+	clientSecret := os.Getenv("REDE_PARCERIAS_CLIENT_SECRET")
+	if clientSecret == "" {
+		clientSecret = "JKKKXFjVYr1MEW87LR6PmfehNUrwCrghZxY39Ja9"
 	}
 
 	return &RedeParceriasClient{
-		baseURL:     strings.TrimRight(url, "/"),
-		bearerToken: token,
-		httpClient:  &http.Client{Timeout: 15 * time.Second},
+		baseURL:      strings.TrimRight(url, "/"),
+		clientID:     clientID,
+		clientSecret: clientSecret,
+		httpClient:   &http.Client{Timeout: 15 * time.Second},
 	}
 }
 
-// RegisterUser cadastra um usuário no clube de benefícios
-// Implementa retry com exponential backoff
-func (c *RedeParceriasClient) RegisterUser(ctx context.Context, lead *domain.Lead) error {
-	// Configuração de retry
-	maxAttempts := 3
-	initialWait := time.Second
-	maxWait := 30 * time.Second
+// getToken obtém token OAuth2 (client_credentials) com cache
+func (c *RedeParceriasClient) getToken(ctx context.Context) (string, error) {
+	// Verificar cache
+	c.tokenMu.RLock()
+	if c.token != "" && time.Now().Before(c.tokenExp) {
+		token := c.token
+		c.tokenMu.RUnlock()
+		return token, nil
+	}
+	c.tokenMu.RUnlock()
 
-	var lastErr error
+	// Gerar novo token via /auth
+	payload := map[string]string{
+		"grant_type":    "client_credentials",
+		"client_id":     c.clientID,
+		"client_secret": c.clientSecret,
+		"scope":         "*",
+	}
 
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		startTime := time.Now()
+	body, _ := json.Marshal(payload)
+	url := fmt.Sprintf("%s/auth", c.baseURL)
 
-		// 1. Preparar payload
-		cpfClean := regexp.MustCompile(`\D`).ReplaceAllString(lead.CPF, "")
-		if len(cpfClean) > 11 {
-			cpfClean = cpfClean[:11]
-		}
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return "", fmt.Errorf("erro criando request auth: %w", err)
+	}
 
-		payload := map[string]interface{}{
-			"name":       lead.Name,
-			"email":      lead.Email,
-			"cpf":        cpfClean,
-			"authorized": true,
-		}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 
-		body, _ := json.Marshal(payload)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("erro na chamada auth: %w", err)
+	}
+	defer resp.Body.Close()
 
-		// 2. Fazer requisição
-		url := fmt.Sprintf("%s/users", c.baseURL)
-		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
-		if err != nil {
-			lead.RedeParceriasError = fmt.Sprintf("REQUEST_BUILD_ERROR: %v", err)
-			return err
-		}
-
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("Authorization", "Bearer "+c.bearerToken)
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			lastErr = err
-			lead.RedeParceriasError = fmt.Sprintf("NETWORK_ERROR (attempt %d): %v", attempt, err)
-			lead.RedeParceriasAttempts = attempt
-
-			// Se não é última tentativa, aguardar e retry
-			if attempt < maxAttempts {
-				waitTime := exponentialBackoff(attempt, initialWait, maxWait)
-				time.Sleep(waitTime)
-				continue
-			}
-			lead.RedeParceriasStatus = domain.PartnerStatusFailed
-			return fmt.Errorf("erro request rede parcerias (tentativas esgotadas): %w", err)
-		}
-		defer resp.Body.Close()
-
-		// 3. Ler resposta completa (para logging)
+	if resp.StatusCode != 200 {
 		respBody, _ := io.ReadAll(resp.Body)
-		responseTime := time.Since(startTime).Milliseconds()
+		return "", fmt.Errorf("auth falhou: HTTP %d - %s", resp.StatusCode, string(respBody))
+	}
 
-		lead.RedeParceriasResponseMs = responseTime
-		lead.RedeParceriasAttempts = attempt
+	var result struct {
+		TokenType   string `json:"token_type"`
+		ExpiresIn   int    `json:"expires_in"`
+		AccessToken string `json:"access_token"`
+	}
 
-		// 4. Processar resposta
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			// Sucesso! Extrair ID da resposta
-			var respData map[string]interface{}
-			if err := json.Unmarshal(respBody, &respData); err == nil {
-				if userID, ok := respData["id"].(string); ok {
-					lead.RedeParceriasUserID = userID
-				}
-			}
-			lead.RedeParceriasStatus = domain.PartnerStatusRegistered
-			lead.RedeParceriasError = ""
-			return nil
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("erro decodificando auth response: %w", err)
+	}
+
+	// Guardar no cache (com margem de segurança de 5 min)
+	c.tokenMu.Lock()
+	c.token = result.AccessToken
+	c.tokenExp = time.Now().Add(time.Duration(result.ExpiresIn-300) * time.Second)
+	c.tokenMu.Unlock()
+
+	return result.AccessToken, nil
+}
+
+// FindUserByCPF verifica se um usuário existe na Rede Parcerias
+func (c *RedeParceriasClient) FindUserByCPF(ctx context.Context, cpf string) (*domain.PartnerUser, error) {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("erro obtendo token: %w", err)
+	}
+
+	// Limpar CPF
+	cpfClean := regexp.MustCompile(`\D`).ReplaceAllString(cpf, "")
+
+	// Buscar usuário
+	url := fmt.Sprintf("%s/users?search=%s&limit=1", c.baseURL, cpfClean)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("erro buscando usuário: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("erro HTTP %d ao buscar usuário", resp.StatusCode)
+	}
+
+	var result struct {
+		Data []struct {
+			ID        string `json:"id"`
+			Name      string `json:"name"`
+			Email     string `json:"email"`
+			CPF       string `json:"cpf"`
+			Cellphone string `json:"cellphone"`
+			Active    bool   `json:"active"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("erro decodificando response: %w", err)
+	}
+
+	// Verificar se encontrou o CPF exato
+	for _, user := range result.Data {
+		userCPF := regexp.MustCompile(`\D`).ReplaceAllString(user.CPF, "")
+		if userCPF == cpfClean {
+			return &domain.PartnerUser{
+				ID:        user.ID,
+				Name:      user.Name,
+				Email:     user.Email,
+				CPF:       user.CPF,
+				Cellphone: user.Cellphone,
+				Active:    user.Active,
+			}, nil
 		}
+	}
 
-		if resp.StatusCode == 422 {
-			// Já existe (tratado como sucesso)
-			// Tentar extrair ID mesmo em 422
-			var respData map[string]interface{}
-			if err := json.Unmarshal(respBody, &respData); err == nil {
-				if userID, ok := respData["id"].(string); ok {
-					lead.RedeParceriasUserID = userID
-				}
-			}
-			lead.RedeParceriasStatus = domain.PartnerStatusRegistered
-			lead.RedeParceriasError = "USER_ALREADY_EXISTS (422)"
-			return nil
-		}
+	return nil, nil // Não encontrado
+}
 
-		if resp.StatusCode == 401 || resp.StatusCode == 403 {
-			// Erro de autenticação - não vai mudar em retry
-			lead.RedeParceriasStatus = domain.PartnerStatusFailed
-			lead.RedeParceriasError = fmt.Sprintf("AUTH_ERROR: HTTP_%d", resp.StatusCode)
-			return fmt.Errorf("erro autenticação rede parcerias: %d", resp.StatusCode)
-		}
-
-		// 5. Outros erros - pode tentar retry
-		lastErr = fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(respBody))
-		lead.RedeParceriasError = fmt.Sprintf("HTTP_%d (attempt %d)", resp.StatusCode, attempt)
-
-		// Se for erro 5xx (servidor), pode tentar retry
-		if resp.StatusCode >= 500 && attempt < maxAttempts {
-			waitTime := exponentialBackoff(attempt, initialWait, maxWait)
-			time.Sleep(waitTime)
-			continue
-		}
-
-		// Erro 4xx que não é 422/401/403 - não vai mudar em retry
+// RegisterUser cadastra um novo usuário na Rede Parcerias
+func (c *RedeParceriasClient) RegisterUser(ctx context.Context, lead *domain.Lead) error {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		lead.RedeParceriasError = fmt.Sprintf("AUTH_ERROR: %v", err)
 		lead.RedeParceriasStatus = domain.PartnerStatusFailed
-		return fmt.Errorf("erro cadastro rede parcerias: %w", lastErr)
+		return fmt.Errorf("erro obtendo token: %w", err)
 	}
 
-	lead.RedeParceriasStatus = domain.PartnerStatusRetryPending
-	return fmt.Errorf("rede parcerias: tentativas esgotadas - %w", lastErr)
-}
+	startTime := time.Now()
 
-// exponentialBackoff calcula o tempo de espera com backoff exponencial
-// Exemplo: tentativa 1 = 1s, tentativa 2 = 2s, tentativa 3 = 4s
-func exponentialBackoff(attempt int, initial, max time.Duration) time.Duration {
-	waitTime := initial * time.Duration(1<<uint(attempt-1)) // 2^(attempt-1)
-	if waitTime > max {
-		waitTime = max
+	// Limpar CPF
+	cpfClean := regexp.MustCompile(`\D`).ReplaceAllString(lead.CPF, "")
+	if len(cpfClean) > 11 {
+		cpfClean = cpfClean[:11]
 	}
-	return waitTime
+
+	payload := map[string]interface{}{
+		"name":       lead.Name,
+		"email":      lead.Email,
+		"cpf":        cpfClean,
+		"authorized": true,
+	}
+
+	if lead.Phone != "" {
+		payload["cellphone"] = lead.Phone
+	}
+
+	body, _ := json.Marshal(payload)
+	url := fmt.Sprintf("%s/users", c.baseURL)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		lead.RedeParceriasError = fmt.Sprintf("REQUEST_ERROR: %v", err)
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		lead.RedeParceriasError = fmt.Sprintf("NETWORK_ERROR: %v", err)
+		lead.RedeParceriasStatus = domain.PartnerStatusFailed
+		return fmt.Errorf("erro na chamada: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	lead.RedeParceriasResponseMs = time.Since(startTime).Milliseconds()
+	lead.RedeParceriasAttempts++
+
+	// Sucesso
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		// Tentar extrair ID da resposta
+		var respData map[string]interface{}
+		if err := json.Unmarshal(respBody, &respData); err == nil {
+			if id, ok := respData["id"].(string); ok {
+				lead.RedeParceriasUserID = id
+			}
+		}
+		lead.RedeParceriasStatus = domain.PartnerStatusRegistered
+		lead.RedeParceriasError = ""
+		return nil
+	}
+
+	// Usuário já existe (422)
+	if resp.StatusCode == 422 {
+		lead.RedeParceriasStatus = domain.PartnerStatusRegistered
+		lead.RedeParceriasError = "USER_ALREADY_EXISTS"
+		return nil
+	}
+
+	// Erro
+	lead.RedeParceriasStatus = domain.PartnerStatusFailed
+	lead.RedeParceriasError = fmt.Sprintf("HTTP_%d: %s", resp.StatusCode, string(respBody))
+	return fmt.Errorf("erro cadastrando: HTTP %d", resp.StatusCode)
 }
 
+// DeleteUser desativa/remove um usuário da Rede Parcerias
+func (c *RedeParceriasClient) DeleteUser(ctx context.Context, userID string) error {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return fmt.Errorf("erro obtendo token: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/users/%s", c.baseURL, userID)
+
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("erro deletando usuário: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 && resp.StatusCode != 404 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("erro HTTP %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	return nil
+}
+
+// GetSSOToken gera um token SSO para login automático no clube
+func (c *RedeParceriasClient) GetSSOToken(ctx context.Context, userID string) (*domain.SSOToken, error) {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("erro obtendo token: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/sso-token?user_id=%s", c.baseURL, userID)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("erro gerando SSO token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("erro HTTP %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result domain.SSOToken
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("erro decodificando SSO response: %w", err)
+	}
+
+	return &result, nil
+}

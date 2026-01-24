@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mobile - Acesso Exclusivo</title>
+    <title>VIP Lounge - Clube de Benefícios</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="api-config.js" defer></script>
     <style>
@@ -49,39 +49,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .logo-section {
             display: flex;
             align-items: center;
             gap: 1rem;
-            flex-shrink: 0;
         }
 
         .logo-img {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
-        }
-
-        .brand-title {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 900;
-            font-size: 1.5rem;
-            color: #003b71;
-        }
-
-        .brand-subtitle {
-            font-size: 0.75rem;
-            color: #7a7a7a;
         }
 
         .security-badge {
             font-size: 0.875rem;
             color: #22c55e;
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .main-container {
@@ -150,7 +136,7 @@
         }
 
         .form-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border: 1px solid rgba(0, 59, 113, 0.1);
             border-radius: 20px;
             padding: 2rem;
@@ -202,7 +188,6 @@
             outline: none;
             border-color: #0054a6;
             box-shadow: 0 0 0 3px rgba(0, 84, 166, 0.1);
-            transform: translateY(-2px);
         }
 
         .cpf-input.valid {
@@ -228,7 +213,7 @@
             display: none;
         }
 
-        .cpf-input.valid + .valid-check {
+        .cpf-input.valid ~ .valid-check {
             display: block;
         }
 
@@ -256,20 +241,24 @@
             box-shadow: 0 15px 40px rgba(0, 59, 113, 0.3);
         }
 
-        .submit-btn:active:not(:disabled) {
-            transform: translateY(-1px);
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
-        .submit-btn:disabled {
-            opacity: 0.8;
-            cursor: not-allowed;
+        .submit-btn.success {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+        }
+
+        .submit-btn.secondary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
         }
 
         .loader {
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(0, 84, 166, 0.2);
-            border-top: 3px solid #0054a6;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             display: none;
@@ -284,76 +273,12 @@
             100% { transform: rotate(360deg); }
         }
 
-        .modal.show {
-            animation: modalFadeIn 0.3s ease-out;
-        }
-
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                background: rgba(0, 0, 0, 0);
-            }
-            to {
-                opacity: 1;
-                background: rgba(0, 0, 0, 0.5);
-            }
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        .loading-status {
             text-align: center;
-            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .success-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes scaleIn {
-            from {
-                transform: scale(0);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .help-links {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
             font-size: 0.875rem;
-            align-items: center;
-        }
-
-        .help-link {
-            color: #0054a6;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .help-link:hover {
-            color: #003b71;
+            color: #7a7a7a;
+            margin-top: 1rem;
+            min-height: 20px;
         }
 
         .error-message {
@@ -400,6 +325,7 @@
             margin-top: 0.5rem;
         }
 
+        /* MODALS */
         .modal {
             display: none;
             position: fixed;
@@ -407,41 +333,161 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(4px);
         }
 
         .modal.show {
             display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
             background: white;
-            border-radius: 20px;
-            padding: 2rem;
+            border-radius: 24px;
+            padding: 2.5rem;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
             text-align: center;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
         }
 
         .modal-title {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: #003b71;
-            margin: 1rem 0;
+            margin-bottom: 0.5rem;
         }
 
         .modal-message {
-            color: #7a7a7a;
+            color: #666;
             line-height: 1.6;
             margin-bottom: 1.5rem;
         }
 
-        .user-id-display {
+        .modal-user-info {
+            background: rgba(0, 84, 166, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .modal-user-info p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .modal-user-info strong {
+            color: #003b71;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .modal-buttons .submit-btn {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .btn-outline {
+            background: transparent !important;
+            border: 2px solid #003b71 !important;
+            color: #003b71 !important;
+            box-shadow: none !important;
+        }
+
+        .btn-outline:hover {
+            background: rgba(0, 59, 113, 0.05) !important;
+        }
+
+        /* MARKETING SECTIONS */
+        .marketing-section {
             display: none;
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .marketing-section.show {
+            display: block;
+        }
+
+        .marketing-image {
+            max-width: 400px;
+            margin: 0 auto 2rem;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 59, 113, 0.15);
+        }
+
+        .marketing-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .marketing-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 4rem 2rem;
+            color: white;
+            border-radius: 20px;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .marketing-placeholder h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .marketing-placeholder p {
+            opacity: 0.9;
+        }
+
+        /* COUNTDOWN / REDIRECT */
+        .redirect-countdown {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .redirect-countdown .countdown-number {
+            font-weight: 700;
+            font-size: 1.1rem;
         }
 
         @media (max-width: 768px) {
@@ -460,44 +506,49 @@
             .info-cards {
                 grid-template-columns: 1fr;
             }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <canvas id="networkCanvas"></canvas>
-    
+
     <header class="header">
         <div class="header-content">
             <div class="logo-section">
                 <img src="/images/logo.png" alt="Logo" class="logo-img">
             </div>
             <div class="security-badge">
-                🔒 Plataforma segura e certificada
+                🔒 Plataforma segura
             </div>
         </div>
     </header>
 
-    <div class="main-container">
+    <!-- TELA PRINCIPAL - FORMULÁRIO -->
+    <div class="main-container" id="mainForm">
         <div class="content-wrapper">
             <div class="image-container">
-                <img src="/images/ParteCondominio.png" alt="Espaço Exclusivo">
+                <img src="/images/ParteCondominio.png" alt="Benefícios Exclusivos">
             </div>
 
             <div>
                 <div class="welcome-header">
                     <div class="welcome-tag">👋 BEM-VINDO</div>
-                    <div class="welcome-title">
-                        Bem-vindo ao seu<br>
-                        <span>espaço exclusivo</span>
-                    </div>
+                    <h1 class="welcome-title">
+                        Acesse seu<br>
+                        <span>Clube de Benefícios</span>
+                    </h1>
                     <p class="welcome-description">
-                        Entre com suas credenciais para acessar seu benefício exclusivo
+                        Digite seu CPF para verificar se você tem direito aos benefícios exclusivos do condomínio
                     </p>
                 </div>
 
                 <div class="form-card">
-                    <div class="form-title">🏢 Área do Condômino</div>
-                    <div class="form-subtitle">✓ Verificação rápida e segura</div>
+                    <div class="form-title">🏢 Verificação de Elegibilidade</div>
+                    <div class="form-subtitle">✓ Validação rápida e segura</div>
 
                     <form id="cpfForm">
                         <div class="form-group">
@@ -510,6 +561,7 @@
                                     class="cpf-input" 
                                     placeholder="000.000.000-00"
                                     maxlength="14"
+                                    autocomplete="off"
                                 >
                                 <span class="valid-check">✓</span>
                             </div>
@@ -517,14 +569,12 @@
 
                         <button type="submit" class="submit-btn" id="submitBtn">
                             <span class="loader" id="loader"></span>
-                            <span id="btnText">Validar</span>
+                            <span id="btnText">Verificar Elegibilidade</span>
                         </button>
                     </form>
 
+                    <div class="loading-status" id="loadingStatus"></div>
                     <div class="error-message" id="errorMessage"></div>
-
-                    <div class="help-links">
-                    </div>
 
                     <div class="info-cards">
                         <div class="info-card">
@@ -545,17 +595,102 @@
         </div>
     </div>
 
-    <div class="modal" id="successModal">
+    <!-- MODAL: NOVO USUÁRIO (Ativar conta) -->
+    <div class="modal" id="newUserModal">
         <div class="modal-content">
-            <div class="success-icon">✅</div>
-            <h2 class="modal-title" id="modalTitle">Bem-vindo!</h2>
-            <p class="modal-message" id="modalMessage">Seu acesso foi validado com sucesso.</p>
-            <div class="user-id-display" id="userIdDisplay"></div>
-            <button class="submit-btn" onclick="closeModal()">Fechar</button>
+            <div class="modal-icon">🎉</div>
+            <h2 class="modal-title">Parabéns!</h2>
+            <p class="modal-message">Você tem direito ao Clube de Benefícios exclusivo do seu condomínio!</p>
+            
+            <div class="modal-user-info" id="newUserInfo">
+                <p><strong>Nome:</strong> <span id="newUserName">-</span></p>
+                <p><strong>E-mail:</strong> <span id="newUserEmail">-</span></p>
+            </div>
+
+            <p class="modal-message">Deseja ativar sua conta agora?</p>
+            
+            <div class="modal-buttons">
+                <button class="submit-btn success" onclick="activateAccount()">
+                    <span class="loader" id="activateLoader"></span>
+                    <span id="activateBtnText">✅ Ativar Minha Conta</span>
+                </button>
+                <button class="submit-btn btn-outline" onclick="closeModal('newUserModal')">Agora não</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: USUÁRIO EXISTENTE (Redirecionando) -->
+    <div class="modal" id="existingUserModal">
+        <div class="modal-content">
+            <div class="modal-icon">👋</div>
+            <h2 class="modal-title" id="welcomeBackTitle">Bem-vindo de volta!</h2>
+            <p class="modal-message" id="welcomeBackMessage">Sua conta está ativa. Redirecionando para o Clube...</p>
+            
+            <div class="redirect-countdown">
+                🚀 Redirecionando em <span class="countdown-number" id="countdown">5</span>s
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 1.5rem;">
+                <button class="submit-btn success" onclick="redirectNow()">Ir agora →</button>
+                <button class="submit-btn btn-outline" onclick="cancelRedirect()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ACESSO REVOGADO -->
+    <div class="modal" id="revokedModal">
+        <div class="modal-content">
+            <div class="modal-icon">😔</div>
+            <h2 class="modal-title">Acesso Revogado</h2>
+            <p class="modal-message">
+                Infelizmente, você não consta mais como condômino no sistema. 
+                Seu acesso ao Clube de Benefícios foi suspenso.
+            </p>
+            
+            <div class="marketing-placeholder">
+                <h3>🏠 Volte a ser condômino!</h3>
+                <p>Entre em contato com a administração do seu condomínio para regularizar sua situação.</p>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="submit-btn" onclick="closeModal('revokedModal')">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NÃO ENCONTRADO -->
+    <div class="modal" id="notFoundModal">
+        <div class="modal-content">
+            <div class="modal-icon">🔍</div>
+            <h2 class="modal-title">CPF não encontrado</h2>
+            <p class="modal-message">
+                Não encontramos seu CPF no sistema de condomínios participantes.
+            </p>
+            
+            <div class="marketing-placeholder">
+                <h3>🎁 Quer ter acesso aos benefícios?</h3>
+                <p>Converse com o síndico do seu condomínio para participar do programa de benefícios exclusivos!</p>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="submit-btn" onclick="closeModal('notFoundModal')">Tentar outro CPF</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // ===== CONFIGURAÇÕES =====
+        const CONFIG = {
+            MARKETING_IMAGE_1: '/images/marketing-convite.png',
+            MARKETING_IMAGE_2: '/images/marketing-recuperacao.png',
+            REDIRECT_DELAY: 5, // segundos
+        };
+
+        // ===== STATE =====
+        let currentResponse = null;
+        let redirectTimer = null;
+        let countdownInterval = null;
+
         // ===== NETWORK ANIMATION =====
         const canvas = document.getElementById('networkCanvas');
         const ctx = canvas.getContext('2d');
@@ -564,44 +699,34 @@
         canvas.height = window.innerHeight;
 
         const particles = [];
-        const particleCount = 60;
-        const connectionDistance = 180;
-        
+        const particleCount = 50;
+        const connectionDistance = 150;
+
         class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 1.2;
-                this.vy = (Math.random() - 0.5) * 1.2;
-                this.radius = Math.random() * 2.5 + 1.5;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.radius = Math.random() * 2 + 1;
             }
 
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
-
                 if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
                 if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-
-                this.x = Math.max(0, Math.min(canvas.width, this.x));
-                this.y = Math.max(0, Math.min(canvas.height, this.y));
             }
 
             draw() {
-                ctx.fillStyle = 'rgba(0, 84, 166, 0.8)';
+                ctx.fillStyle = 'rgba(0, 84, 166, 0.6)';
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Glow effect
-                ctx.fillStyle = 'rgba(0, 84, 166, 0.2)';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        function init() {
+        function initParticles() {
             particles.length = 0;
             for (let i = 0; i < particleCount; i++) {
                 particles.push(new Particle());
@@ -614,11 +739,10 @@
                     const dx = particles[i].x - particles[j].x;
                     const dy = particles[i].y - particles[j].y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-
                     if (distance < connectionDistance) {
-                        const opacity = (1 - distance / connectionDistance) * 0.5;
+                        const opacity = (1 - distance / connectionDistance) * 0.3;
                         ctx.strokeStyle = `rgba(0, 84, 166, ${opacity})`;
-                        ctx.lineWidth = 1.5;
+                        ctx.lineWidth = 1;
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
@@ -629,15 +753,9 @@
         }
 
         function animate() {
-            // Limpar canvas completamente sem trail
             ctx.fillStyle = 'rgba(250, 250, 250, 1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            particles.forEach(particle => {
-                particle.update();
-                particle.draw();
-            });
-
+            particles.forEach(p => { p.update(); p.draw(); });
             drawConnections();
             requestAnimationFrame(animate);
         }
@@ -647,14 +765,14 @@
             canvas.height = window.innerHeight;
         });
 
-        init();
+        initParticles();
         animate();
 
-        // ===== CPF INPUT & FORM =====
+        // ===== CPF INPUT MASK =====
         document.getElementById('cpfInput').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
-            
+
             if (value.length <= 3) {
                 e.target.value = value;
             } else if (value.length <= 6) {
@@ -672,60 +790,209 @@
             }
         });
 
+        // ===== FORM SUBMIT =====
         document.getElementById('cpfForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const cpf = document.getElementById('cpfInput').value.replace(/\D/g, '');
             const errorDiv = document.getElementById('errorMessage');
             const submitBtn = document.getElementById('submitBtn');
             const loader = document.getElementById('loader');
             const btnText = document.getElementById('btnText');
+            const loadingStatus = document.getElementById('loadingStatus');
 
             if (cpf.length !== 11) {
-                errorDiv.textContent = 'Por favor, insira um CPF válido';
-                errorDiv.classList.add('show');
+                showError('Por favor, insira um CPF válido com 11 dígitos');
                 return;
             }
 
-            // Mostrar loading
+            // Reset
+            errorDiv.classList.remove('show');
             submitBtn.disabled = true;
             loader.classList.add('show');
-            btnText.textContent = 'Buscando...';
-            errorDiv.classList.remove('show');
+            btnText.textContent = 'Verificando...';
+
+            // Loading messages
+            const messages = [
+                'Verificando CPF...',
+                'Consultando base de dados...',
+                'Verificando elegibilidade...',
+                'Quase lá...'
+            ];
+            let msgIndex = 0;
+            const msgInterval = setInterval(() => {
+                loadingStatus.textContent = messages[msgIndex % messages.length];
+                msgIndex++;
+            }, 1500);
 
             try {
                 const data = await callBackendAPI('validate', {
                     method: 'POST',
-                    body: JSON.stringify({ cpf: cpf, condo_id: 'condo_demo_123' })
+                    body: JSON.stringify({ cpf: cpf, condo_id: '' })
                 });
 
-                // Ocultar loading
+                clearInterval(msgInterval);
+                loadingStatus.textContent = '';
                 loader.classList.remove('show');
-                btnText.textContent = 'Validar';
+                btnText.textContent = 'Verificar Elegibilidade';
                 submitBtn.disabled = false;
 
-                if (data.valid) {
-                    document.getElementById('modalTitle').textContent = `Bem-vindo, ${data.name || 'usuário'}!`;
-                    document.getElementById('modalMessage').textContent = 'Seu acesso foi validado com sucesso e você está cadastrado em nosso clube!';
-                    
-                    document.getElementById('successModal').classList.add('show');
-                } else {
-                    errorDiv.textContent = data.message || 'Erro ao validar CPF';
-                    errorDiv.classList.add('show');
-                }
+                currentResponse = data;
+                handleResponse(data);
+
             } catch (error) {
+                clearInterval(msgInterval);
+                loadingStatus.textContent = '';
                 loader.classList.remove('show');
-                btnText.textContent = 'Validar';
+                btnText.textContent = 'Verificar Elegibilidade';
                 submitBtn.disabled = false;
-                errorDiv.textContent = 'Erro ao conectar com o servidor';
-                errorDiv.classList.add('show');
+                showError('Erro ao conectar com o servidor. Tente novamente.');
+                console.error('API Error:', error);
             }
         });
 
-        function closeModal() {
-            document.getElementById('successModal').classList.remove('show');
+        // ===== RESPONSE HANDLER =====
+        function handleResponse(data) {
+            console.log('Response:', data);
+
+            switch (data.scenario) {
+                case 'new_user':
+                    showNewUserModal(data);
+                    break;
+
+                case 'existing_user':
+                    showExistingUserModal(data);
+                    break;
+
+                case 'revoked_user':
+                    showRevokedModal(data);
+                    break;
+
+                case 'not_found':
+                default:
+                    showNotFoundModal(data);
+                    break;
+            }
+        }
+
+        // ===== MODAL FUNCTIONS =====
+        function showNewUserModal(data) {
+            document.getElementById('newUserName').textContent = data.name || '-';
+            document.getElementById('newUserEmail').textContent = data.email || '-';
+            
+            // Se já tem SSO, mostrar modal de redirecionamento
+            if (data.redirect_url) {
+                showExistingUserModal(data);
+                return;
+            }
+
+            document.getElementById('newUserModal').classList.add('show');
+        }
+
+        function showExistingUserModal(data) {
+            const title = document.getElementById('welcomeBackTitle');
+            const message = document.getElementById('welcomeBackMessage');
+            
+            if (data.name) {
+                title.textContent = `Bem-vindo, ${data.name.split(' ')[0]}!`;
+            }
+            message.textContent = data.message || 'Sua conta está ativa. Redirecionando...';
+
+            document.getElementById('existingUserModal').classList.add('show');
+            startCountdown(data.redirect_url);
+        }
+
+        function showRevokedModal(data) {
+            document.getElementById('revokedModal').classList.add('show');
+        }
+
+        function showNotFoundModal(data) {
+            document.getElementById('notFoundModal').classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            cancelRedirect();
+        }
+
+        // ===== ACTIVATE ACCOUNT =====
+        async function activateAccount() {
+            const loader = document.getElementById('activateLoader');
+            const btnText = document.getElementById('activateBtnText');
+
+            loader.classList.add('show');
+            btnText.textContent = 'Ativando...';
+
+            // Simular ativação (já foi feito no backend)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            loader.classList.remove('show');
+            
+            if (currentResponse && currentResponse.redirect_url) {
+                btnText.textContent = 'Redirecionando...';
+                closeModal('newUserModal');
+                showExistingUserModal(currentResponse);
+            } else {
+                btnText.textContent = '✅ Conta Ativada!';
+                setTimeout(() => {
+                    closeModal('newUserModal');
+                    showSuccess('Sua conta foi ativada! Você receberá um e-mail com instruções de acesso.');
+                }, 1000);
+            }
+        }
+
+        // ===== REDIRECT FUNCTIONS =====
+        function startCountdown(redirectUrl) {
+            let seconds = CONFIG.REDIRECT_DELAY;
+            const countdownEl = document.getElementById('countdown');
+            
+            countdownInterval = setInterval(() => {
+                seconds--;
+                countdownEl.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    }
+                }
+            }, 1000);
+
+            redirectTimer = setTimeout(() => {
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            }, CONFIG.REDIRECT_DELAY * 1000);
+        }
+
+        function redirectNow() {
+            cancelRedirect();
+            if (currentResponse && currentResponse.redirect_url) {
+                window.location.href = currentResponse.redirect_url;
+            }
+        }
+
+        function cancelRedirect() {
+            if (redirectTimer) {
+                clearTimeout(redirectTimer);
+                redirectTimer = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function showSuccess(message) {
+            alert(message); // Simplificado - pode ser substituído por toast
         }
     </script>
 </body>
 </html>
-
