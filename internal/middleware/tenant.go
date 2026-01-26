@@ -42,18 +42,18 @@ func mapHostToTenantID(host string) string {
 	// Normalizar host (lowercase)
 	host = strings.ToLower(host)
 	
-	// Mapeamento de domínios
+	// Mapeamento de domínios específicos (opcional - para performance)
+	// Se você souber antecipadamente o condomínio, pode mapear aqui
 	switch host {
 	case "viplounge.com.br", "www.viplounge.com.br":
 		return "4" // Condomínio VIP Lounge (Unidade 48384 - Enrico)
 	case "mobile.viplounge.com.br":
 		return "4" // Mesmo condomínio
-	case "localhost":
-		return "4" // Desenvolvimento local
 	default:
-		// Fallback: se não reconhecer o domínio, usar ID 4 como padrão
-		log.Printf("[TENANT] Host desconhecido: %s, usando tenant_id padrão: 4", host)
-		return "4"
+		// BUSCA GLOBAL: Para hosts desconhecidos ou localhost, usar -1
+		// Isso permite que a API Superlógica procure em todos os condomínios
+		log.Printf("[TENANT] Host: %s -> Usando busca global (tenant_id=-1)", host)
+		return "-1"
 	}
 }
 
@@ -62,6 +62,6 @@ func GetTenantID(ctx context.Context) string {
 	if tenantID, ok := ctx.Value(TenantIDKey).(string); ok {
 		return tenantID
 	}
-	// Fallback se não houver tenant_id no contexto
-	return "4"
+	// Fallback: busca global se não houver tenant_id no contexto
+	return "-1"
 }

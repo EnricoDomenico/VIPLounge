@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/viplounge/platform/internal/domain"
@@ -55,6 +54,7 @@ func NewBenefAdapter() *SuperlogicaAdapter {
 // Response structs
 type UnitResponse []struct {
 	IDUnidade            string `json:"id_unidade_uni"`
+	IDCondominio         string `json:"id_condominio_cond"` // ID do condomínio retornado pela API
 	NomeProprietario     string `json:"nome_proprietario"`
 	EmailProprietario    string `json:"email_proprietario"`
 	CelularProprietario  string `json:"celular_proprietario"`
@@ -62,88 +62,32 @@ type UnitResponse []struct {
 	CPFProprietario      string `json:"cpf_proprietario"`
 }
 
-type CondoResponse []struct {
-	IDCondominio string `json:"id_condominio_cond"`
-}
-
 func (s *SuperlogicaAdapter) ValidateMember(ctx context.Context, condoID string, cpf string) (bool, *domain.Lead, error) {
-	// 1. TENTATIVA RÁPIDA: Busca Global (ID -1)
-	// Se nenhum ID específico foi solicitado (ou foi solicitado busca global), tenta o atalho
-	if condoID == "" || condoID == "-1" {
-		found, lead, _ := s.checkUnit(ctx, "-1", cpf)
-		if found {
-			return true, lead, nil
-		}
-		// Se não achou ou deu erro no -1, cai para o fallback abaixo (Varredura)
-	} else {
-		// Se foi passado um ID específico (ex: "4"), verifica apenas nele
-		return s.checkUnit(ctx, condoID, cpf)
+	// BUSCA GLOBAL: Usar idCondominio=-1 para buscar em todos os condomínios
+	// Se condoID for vazio ou "-1", a Superlógica fará a busca global
+	// Se condoID for específico (ex: "4", "558"), busca apenas naquele condomínio
+	
+	if condoID == "" {
+		condoID = "-1" // Busca global por padrão
 	}
-
-	// 2. FALLBACK: Varredura em todos os condomínios
-	ids, err := s.listCondos(ctx)
+	
+	log.Printf("[BENEF] ValidateMember - CondoID: %s, CPF: %s", condoID, cpf)
+	
+	// Faz a busca (global ou específica)
+	found, lead, err := s.checkUnit(ctx, condoID, cpf)
+	
 	if err != nil {
-		return false, nil, fmt.Errorf("erro ao listar condominios para varredura: %w", err)
+		log.Printf("[BENEF] Erro na busca: %v", err)
+		return false, nil, err
 	}
-
-	// Itera sobre todos os condomínios
-	for _, id := range ids {
-		found, lead, err := s.checkUnit(ctx, id, cpf)
-		if err == nil && found {
-			return true, lead, nil
-		}
-		// Log de debug poderia ser útil aqui: "Não achou no condominio X"
+	
+	if found {
+		log.Printf("[BENEF] Morador encontrado! Condomínio real: %s, Nome: %s", lead.CondoID, lead.Name)
+		return true, lead, nil
 	}
-
+	
+	log.Printf("[BENEF] Morador não encontrado para CPF: %s", cpf)
 	return false, nil, nil
-}
-
-func (s *SuperlogicaAdapter) listCondos(ctx context.Context) ([]string, error) {
-	endpoint := fmt.Sprintf("%s/condominios/index", s.apiURL)
-	req, _ := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
-	
-	q := req.URL.Query()
-	q.Add("itensPorPagina", "100") // Limite razoável para teste
-	req.URL.RawQuery = q.Encode()
-
-	s.addHeaders(req)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		// Se falhar listar, fallback para varredura manual 1..50 (brute force safe)
-		var bruteList []string
-		for i := 1; i <= 50; i++ {
-			bruteList = append(bruteList, strconv.Itoa(i))
-		}
-		return bruteList, nil
-	}
-
-	var data CondoResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
-	}
-
-	var ids []string
-	for _, c := range data {
-		ids = append(ids, c.IDCondominio)
-	}
-	
-	// Fallback se lista vazia ou erro
-	if len(ids) == 0 {
-		// Gera lista de 1 a 50 para varredura bruta garantida
-		var bruteList []string
-		for i := 1; i <= 50; i++ {
-			bruteList = append(bruteList, strconv.Itoa(i))
-		}
-		return bruteList, nil
-	}
-
-	return ids, nil
 }
 
 func (s *SuperlogicaAdapter) checkUnit(ctx context.Context, id string, cpf string) (bool, *domain.Lead, error) {
@@ -155,11 +99,13 @@ func (s *SuperlogicaAdapter) checkUnit(ctx context.Context, id string, cpf strin
 	q := req.URL.Query()
 	q.Add("idCondominio", id)
 	q.Add("pesquisa", cpf)
-	q.Add("itensPorPagina", "1")
+	q.Add("itensPorPagina", "50") // Aumentado conforme solicitado
 	q.Add("exibirDadosDosContatos", "1")
 	req.URL.RawQuery = q.Encode()
 
 	s.addHeaders(req)
+	
+	log.Printf("[BENEF] Chamando API: %s?idCondominio=%s&pesquisa=%s", endpoint, id, cpf)
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
@@ -185,10 +131,19 @@ func (s *SuperlogicaAdapter) checkUnit(ctx context.Context, id string, cpf strin
 		}
 		
 		responseTime := time.Since(startTime).Milliseconds()
+		
+		// CAPTURA O ID REAL DO CONDOMÍNIO DA RESPOSTA DA API
+		// Quando idCondominio=-1, a API retorna o id_condominio_cond correto
+		realCondoID := unit.IDCondominio
+		if realCondoID == "" {
+			realCondoID = id // Fallback: usa o ID da busca se não vier na resposta
+		}
+		
+		log.Printf("[BENEF] Morador encontrado! Condomínio Real: %s (busca com: %s)", realCondoID, id)
 
 		return true, &domain.Lead{
 			CPF:                   cpf,
-			CondoID:               id,
+			CondoID:               realCondoID, // USA O ID REAL retornado pela API
 			Name:                  unit.NomeProprietario,
 			Email:                 unit.EmailProprietario,
 			Phone:                 phone,
