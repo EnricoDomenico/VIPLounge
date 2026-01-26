@@ -30,11 +30,25 @@ func (h *Handler) Routes() http.Handler {
 	// Middlewares Básicos
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(customMiddleware.TenantMiddleware)  // Aplicar ANTES de tudo
 	r.Use(customMiddleware.SecurityHeaders)
 	
-	// Configuração de CORS (agnóstica)
+	// Configuração de CORS - incluir domínios específicos do VipLounge
+	allowedOrigins := []string{
+		"https://viplounge.com.br",
+		"https://www.viplounge.com.br",
+		"https://mobile.viplounge.com.br",
+		"http://localhost:8080",
+		"http://localhost:3000",
+	}
+	
+	// Mesclar com origens da configuração, se houver
+	if len(h.cfg.Security.CORSAllowedOrigins) > 0 && h.cfg.Security.CORSAllowedOrigins[0] != "*" {
+		allowedOrigins = append(allowedOrigins, h.cfg.Security.CORSAllowedOrigins...)
+	}
+	
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   h.cfg.Security.CORSAllowedOrigins,
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},
@@ -91,7 +105,14 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Se condoID não for fornecido, usar default
+	// IMPORTANTE: Buscar tenant_id do contexto (injetado pelo TenantMiddleware)
+	// Isso garante que cada domínio use o ID de condomínio correto
+	tenantID := customMiddleware.GetTenantID(r.Context())
+	if tenantID != "" {
+		req.CondoID = tenantID
+	}
+	
+	// Fallback: Se não vier do contexto, usar configuração
 	if req.CondoID == "" {
 		req.CondoID = h.cfg.Behavior.DefaultCondoID
 	}
