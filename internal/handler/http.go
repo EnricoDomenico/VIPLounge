@@ -65,15 +65,22 @@ func (h *Handler) Routes() http.Handler {
 	r.Post("/v1/validate", h.handleValidate)
 
 	// 5. Servir Arquivos Estáticos (Substituindo o Firebase)
+	// File Server para arquivos estáticos
 	fs := http.FileServer(http.Dir("web"))
 	
-	// Rota para imagens
-	r.Handle("/images/*", http.StripPrefix("/", fs))
-	
-	// Rota para o config JS do frontend
+	// Rotas específicas para arquivos conhecidos (otimização + headers corretos)
 	r.Get("/api-config.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		http.ServeFile(w, r, "web/api-config.js")
+	})
+	
+	r.Get("/backend-config.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		http.ServeFile(w, r, "web/backend-config.json")
+	})
+	
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/favicon.ico")
 	})
 	
 	// Rota Raiz: Serve o portal do cliente. Essencial para validação de SSL
@@ -81,6 +88,10 @@ func (h *Handler) Routes() http.Handler {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		http.ServeFile(w, r, "web/index.html")
 	})
+	
+	// CATCH-ALL: Servir todos os outros arquivos estáticos (imagens, CSS, etc)
+	// Deve ser a ÚLTIMA rota para não conflitar com as rotas da API
+	r.Handle("/*", http.StripPrefix("/", fs))
 
 	return r
 }

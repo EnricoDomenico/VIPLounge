@@ -1,0 +1,5 @@
+{
+  "backendUrl": "https://mobile.viplounge.com.br",
+  "environment": "production",
+  "version": "1.0.0"
+}
