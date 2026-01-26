@@ -46,9 +46,11 @@ func mapHostToTenantID(host string) string {
 	// Se você souber antecipadamente o condomínio, pode mapear aqui
 	switch host {
 	case "viplounge.com.br", "www.viplounge.com.br":
-		return "4" // Condomínio VIP Lounge (Unidade 48384 - Enrico)
+		return "4" // Condomínio VIP Lounge específico (Unidade 48384 - Enrico)
 	case "mobile.viplounge.com.br":
-		return "4" // Mesmo condomínio
+		// BUSCA GLOBAL para mobile - permite encontrar qualquer morador
+		log.Printf("[TENANT] Host mobile -> Usando busca global (tenant_id=-1)", host)
+		return "-1"
 	default:
 		// BUSCA GLOBAL: Para hosts desconhecidos ou localhost, usar -1
 		// Isso permite que a API Superlógica procure em todos os condomínios

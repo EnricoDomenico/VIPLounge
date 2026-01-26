@@ -99,14 +99,16 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Injeção do Tenant ID via Contexto (Middleware)
-	tenantID := customMiddleware.GetTenantID(r.Context())
-	if tenantID != "" {
-		req.CondoID = tenantID
-	}
-	
+	// PRIORIDADE DE BUSCA:
+	// 1. Se CondoID vier vazio no JSON, usar o Tenant ID do contexto (pode ser -1 ou específico)
+	// 2. Se o contexto também estiver vazio, usar DefaultCondoID da config
 	if req.CondoID == "" {
-		req.CondoID = h.cfg.Behavior.DefaultCondoID
+		tenantID := customMiddleware.GetTenantID(r.Context())
+		if tenantID != "" {
+			req.CondoID = tenantID
+		} else {
+			req.CondoID = h.cfg.Behavior.DefaultCondoID
+		}
 	}
 	
 	if h.cfg.Behavior.CondoIDRequired && req.CondoID == "" {
