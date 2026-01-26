@@ -27,13 +27,18 @@ func NewHandler(svc *service.ValidationService, cfg *config.Config) *Handler {
 func (h *Handler) Routes() http.Handler {
 	r := chi.NewRouter()
 
-	// Middlewares Básicos
+	// 1. HEARTBEAT - Otimização para o Cron-job
+	// Deve ser o primeiro middleware para responder rápido e com corpo mínimo (.)
+	r.Use(middleware.Heartbeat("/v1/health"))
+	r.Use(middleware.Heartbeat("/health"))
+
+	// 2. Middlewares de Base e Multi-tenancy
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(customMiddleware.TenantMiddleware)  // Aplicar ANTES de tudo
+	r.Use(customMiddleware.TenantMiddleware) // Identifica o condomínio pelo Host
 	r.Use(customMiddleware.SecurityHeaders)
 	
-	// Configuração de CORS - incluir domínios específicos do VipLounge
+	// 3. Configuração de CORS para os domínios oficiais
 	allowedOrigins := []string{
 		"https://viplounge.com.br",
 		"https://www.viplounge.com.br",
@@ -42,7 +47,6 @@ func (h *Handler) Routes() http.Handler {
 		"http://localhost:3000",
 	}
 	
-	// Mesclar com origens da configuração, se houver
 	if len(h.cfg.Security.CORSAllowedOrigins) > 0 && h.cfg.Security.CORSAllowedOrigins[0] != "*" {
 		allowedOrigins = append(allowedOrigins, h.cfg.Security.CORSAllowedOrigins...)
 	}
@@ -56,32 +60,23 @@ func (h *Handler) Routes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
-	})
-
-	// Novo endpoint: GET /config - retorna configuração para frontend
+	// 4. Endpoints de Configuração e API
 	r.Get("/config", h.handleConfig)
-
-	// Rotas da API - será chamada via Cloud Function proxy de Firebase
 	r.Post("/v1/validate", h.handleValidate)
-	r.Get("/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
-	})
 
-	// Servir arquivos estáticos - images
+	// 5. Servir Arquivos Estáticos (Substituindo o Firebase)
 	fs := http.FileServer(http.Dir("web"))
+	
+	// Rota para imagens
 	r.Handle("/images/*", http.StripPrefix("/", fs))
 	
-	// Servir api-config.js com MIME type correto
+	// Rota para o config JS do frontend
 	r.Get("/api-config.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/javascript")
 		http.ServeFile(w, r, "web/api-config.js")
 	})
 	
-	// Servir index.html como raiz
+	// Rota Raiz: Serve o portal do cliente. Essencial para validação de SSL
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		http.ServeFile(w, r, "web/index.html")
@@ -99,20 +94,17 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validação básica de formato
 	if !cpfRegex.MatchString(req.CPF) {
 		http.Error(w, "Invalid CPF format", http.StatusBadRequest)
 		return
 	}
 	
-	// IMPORTANTE: Buscar tenant_id do contexto (injetado pelo TenantMiddleware)
-	// Isso garante que cada domínio use o ID de condomínio correto
+	// Injeção do Tenant ID via Contexto (Middleware)
 	tenantID := customMiddleware.GetTenantID(r.Context())
 	if tenantID != "" {
 		req.CondoID = tenantID
 	}
 	
-	// Fallback: Se não vier do contexto, usar configuração
 	if req.CondoID == "" {
 		req.CondoID = h.cfg.Behavior.DefaultCondoID
 	}
@@ -124,7 +116,6 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.svc.ValidateAndSave(r.Context(), req)
 	if err != nil {
-		// Log interno aqui
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -132,5 +123,3 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
-
-
