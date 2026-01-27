@@ -235,6 +235,14 @@ func (c *RedeParceriasClient) RegisterUser(ctx context.Context, lead *domain.Lea
 	// Celular é opcional - formato: (XX) 9XXXX-XXXX ou apenas números com 11 dígitos
 	if lead.Phone != "" {
 		phoneClean := regexp.MustCompile(`\D`).ReplaceAllString(lead.Phone, "")
+		
+		// Remover código do país (+55 ou 55) se presente
+		// Superlógica pode retornar: "+55 11973559993" ou "5511973559993"
+		if strings.HasPrefix(phoneClean, "55") && len(phoneClean) > 11 {
+			phoneClean = phoneClean[2:] // Remove os primeiros 2 dígitos (55)
+			log.Printf("[REDE_PARCERIAS] Código do país (+55) removido")
+		}
+		
 		// Validar: deve ter 11 dígitos e começar com DDD válido (11-99) + 9
 		if len(phoneClean) == 11 && phoneClean[2] == '9' {
 			// Formatar como (XX) 9XXXX-XXXX para a API aceitar
@@ -243,7 +251,9 @@ func (c *RedeParceriasClient) RegisterUser(ctx context.Context, lead *domain.Lea
 				phoneClean[2:7], 
 				phoneClean[7:11])
 			payload["cellphone"] = formattedPhone
-			log.Printf("[REDE_PARCERIAS] Celular formatado: %s", formattedPhone)
+			log.Printf("[REDE_PARCERIAS] Celular formatado: %s (original: %s)", formattedPhone, lead.Phone)
+		} else {
+			log.Printf("[REDE_PARCERIAS] Celular inválido ou não é celular: %s (length: %d)", phoneClean, len(phoneClean))
 		}
 	}
 
