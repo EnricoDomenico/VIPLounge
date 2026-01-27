@@ -41,6 +41,7 @@ func (h *Handler) Routes() http.Handler {
 	// 3. Configuração de CORS para os domínios oficiais
 	allowedOrigins := []string{
 		"https://viplounge.com.br",
+		"https://viplounge.mobile.adm.br",
 		"https://www.viplounge.com.br",
 		"https://mobile.viplounge.com.br",
 		"http://localhost:8080",

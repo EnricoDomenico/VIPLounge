@@ -47,7 +47,7 @@ func mapHostToTenantID(host string) string {
 	switch host {
 	case "viplounge.com.br", "www.viplounge.com.br":
 		return "4" // Condomínio VIP Lounge específico (Unidade 48384 - Enrico)
-	case "mobile.viplounge.com.br":
+	case "viplounge.mobile.adm.br":
 		// BUSCA GLOBAL para mobile - permite encontrar qualquer morador
 		log.Printf("[TENANT] Host mobile -> Usando busca global (tenant_id=-1)", host)
 		return "-1"
