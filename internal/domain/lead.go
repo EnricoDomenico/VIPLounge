@@ -38,6 +38,9 @@ const (
 	
 	// Erro durante validação
 	ScenarioError = "error"
+	
+	// Aguardando confirmação de e-mail (novo fluxo de segurança)
+	ScenarioPendingEmailConfirmation = "pending_email_confirmation"
 )
 
 // Lead representa um condômino/usuário validado ou tentado
@@ -96,6 +99,12 @@ type ValidationRequest struct {
 	CondoID string `json:"condo_id"`
 }
 
+// EmailConfirmationRequest é o payload para confirmar o e-mail (segunda etapa)
+type EmailConfirmationRequest struct {
+	CPF   string `json:"cpf"`
+	Email string `json:"email"`
+}
+
 // ValidationResponse é a resposta completa para o Frontend
 type ValidationResponse struct {
 	// Status básico
@@ -109,6 +118,9 @@ type ValidationResponse struct {
 	Name   string `json:"name,omitempty"`
 	Email  string `json:"email,omitempty"`
 	UserID string `json:"user_id,omitempty"`
+
+	// Segurança adicional - email mascarado para validação em duas etapas
+	EmailHint string `json:"email_hint,omitempty"`
 
 	// SSO para redirecionamento (se aplicável)
 	SSOToken    string `json:"sso_token,omitempty"`

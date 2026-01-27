@@ -64,6 +64,7 @@ func (h *Handler) Routes() http.Handler {
 	// 4. Endpoints de Configuração e API
 	r.Get("/config", h.handleConfig)
 	r.Post("/v1/validate", h.handleValidate)
+	r.Post("/v1/confirm-email", h.handleConfirmEmail)
 
 	// 5. Servir Arquivos Estáticos (Substituindo o Firebase)
 	// File Server para arquivos estáticos
@@ -129,6 +130,33 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := h.svc.ValidateAndSave(r.Context(), req)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) handleConfirmEmail(w http.ResponseWriter, r *http.Request) {
+	var req domain.EmailConfirmationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if !cpfRegex.MatchString(req.CPF) {
+		http.Error(w, "Invalid CPF format", http.StatusBadRequest)
+		return
+	}
+
+	if req.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.svc.ConfirmEmailAndActivate(r.Context(), req)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

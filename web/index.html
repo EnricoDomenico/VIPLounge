@@ -943,11 +943,11 @@
     <div class="modal" id="confirmModal">
         <div class="modal-content">
             <div class="modal-icon">🎁</div>
-            <h2 class="modal-title">Você tem direito!</h2>
+            <h2 class="modal-title">Parabéns! Você tem direito!</h2>
             
             <div class="modal-user-info" id="confirmUserInfo">
                 <p><strong>Nome:</strong> <span id="confirmUserName">-</span></p>
-                <p><strong>E-mail:</strong> <span id="confirmUserEmail">-</span></p>
+                <p><strong>E-mail cadastrado:</strong> <span id="confirmUserEmailHint">-</span></p>
             </div>
 
             <div class="benefit-highlight">
@@ -956,12 +956,27 @@
                 <p>Descontos em farmácias, restaurantes, cinema, viagens e muito mais!</p>
             </div>
 
-            <p class="modal-message confirm-question">Deseja ativar seu acesso gratuito agora?</p>
+            <p class="modal-message confirm-question">Para sua segurança, confirme seu e-mail cadastrado:</p>
+            
+            <div class="form-group" style="margin: 1.5rem 0;">
+                <div class="input-wrapper">
+                    <span class="input-icon">📧</span>
+                    <input 
+                        type="email" 
+                        id="emailConfirmInput" 
+                        class="cpf-input" 
+                        placeholder="seuemail@exemplo.com"
+                        autocomplete="email"
+                        style="padding-left: 2.5rem;"
+                    >
+                </div>
+                <div class="error-message" id="emailConfirmError" style="margin-top: 0.5rem; font-size: 0.85rem;"></div>
+            </div>
             
             <div class="modal-buttons">
-                <button class="submit-btn success pulse-btn" onclick="confirmActivation()">
+                <button class="submit-btn success pulse-btn" onclick="confirmEmailAndActivate()">
                     <span class="loader" id="confirmLoader"></span>
-                    <span id="confirmBtnText">✅ Sim, quero meus benefícios!</span>
+                    <span id="confirmBtnText">✅ Confirmar e Entrar</span>
                 </button>
                 <button class="submit-btn btn-outline" onclick="declineActivation()">Não, obrigado</button>
             </div>
@@ -1226,18 +1241,20 @@
             console.log('Response:', data);
 
             switch (data.scenario) {
+                case 'pending_email_confirmation':
+                    // NOVO FLUXO: Aguardar confirmação de e-mail
+                    showConfirmModal(data);
+                    break;
+
                 case 'existing_user':
-                    // JÁ EXISTE nos dois sistemas → Redireciona DIRETO (sem perguntar)
+                case 'new_user':
+                    // Cenários legados (não devem mais acontecer com novo fluxo)
+                    // Caso ainda retornem com redirect_url, redirecionar
                     if (data.redirect_url) {
                         showRedirectModal(data);
                     } else {
-                        showConfirmModal(data); // Fallback se não tiver URL
+                        showConfirmModal(data); // Fallback
                     }
-                    break;
-
-                case 'new_user':
-                    // PRIMEIRO ACESSO → Mostra modal de confirmação
-                    showConfirmModal(data);
                     break;
 
                 case 'revoked_user':
@@ -1253,42 +1270,98 @@
 
         // ===== MODAL FUNCTIONS =====
         
-        // Modal de confirmação (pergunta se quer o benefício)
+        // Modal de confirmação (pergunta e-mail para validação)
         function showConfirmModal(data) {
             // Limpar nome (remover espaços extras no início)
             const cleanName = (data.name || '').trim();
             const firstName = cleanName.split(' ')[0] || 'Usuário';
             
             document.getElementById('confirmUserName').textContent = cleanName || '-';
-            document.getElementById('confirmUserEmail').textContent = data.email || '-';
+            document.getElementById('confirmUserEmailHint').textContent = data.email_hint || '*****@***';
+            
+            // Limpar campo de e-mail e erro
+            document.getElementById('emailConfirmInput').value = '';
+            const errorDiv = document.getElementById('emailConfirmError');
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('show');
             
             document.getElementById('confirmModal').classList.add('show');
         }
 
-        // Quando confirma que quer o benefício
-        async function confirmActivation() {
+        // Quando confirma o e-mail e quer o benefício
+        async function confirmEmailAndActivate() {
+            const emailInput = document.getElementById('emailConfirmInput');
+            const email = emailInput.value.trim();
+            const errorDiv = document.getElementById('emailConfirmError');
             const loader = document.getElementById('confirmLoader');
             const btnText = document.getElementById('confirmBtnText');
+            
+            // Validação básica
+            if (!email) {
+                errorDiv.textContent = 'Por favor, digite seu e-mail.';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            if (!email.includes('@') || !email.includes('.')) {
+                errorDiv.textContent = 'Por favor, digite um e-mail válido.';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            // Limpar erro
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('show');
 
             loader.classList.add('show');
-            btnText.textContent = 'Ativando seu acesso...';
+            btnText.textContent = 'Verificando e-mail...';
 
-            // Pequeno delay para mostrar loading
-            await new Promise(resolve => setTimeout(resolve, 800));
+            try {
+                // Obter CPF da validação anterior
+                const cpf = document.getElementById('cpfInput').value.replace(/\D/g, '');
+                
+                const data = await callBackendAPI('confirm-email', {
+                    method: 'POST',
+                    body: JSON.stringify({ cpf: cpf, email: email })
+                });
 
-            loader.classList.remove('show');
-            
-            // Fechar modal de confirmação
-            closeModal('confirmModal');
-            
-            // Mostrar modal de redirecionamento
-            if (currentResponse && currentResponse.redirect_url) {
-                showRedirectModal(currentResponse);
-            } else {
-                // Se não tem redirect_url, mostrar mensagem de sucesso
+                loader.classList.remove('show');
+                
+                // Verificar se e-mail está correto
+                if (!data.valid || data.scenario === 'error') {
+                    btnText.textContent = '✅ Confirmar e Entrar';
+                    errorDiv.textContent = data.message || 'E-mail incorreto. Por favor, verifique o e-mail cadastrado.';
+                    errorDiv.classList.add('show');
+                    return;
+                }
+                
+                // E-mail correto! Prosseguir com ativação
                 btnText.textContent = '✅ Ativado!';
-                showSuccess('Sua conta foi ativada! Você receberá um e-mail com instruções de acesso.');
+                
+                // Fechar modal de confirmação
+                closeModal('confirmModal');
+                
+                // Mostrar modal de redirecionamento
+                if (data.redirect_url) {
+                    currentResponse = data;
+                    showRedirectModal(data);
+                } else {
+                    // Fallback se não tiver redirect
+                    showSuccess('Sua conta foi ativada! Você receberá um e-mail com instruções de acesso.');
+                }
+
+            } catch (error) {
+                loader.classList.remove('show');
+                btnText.textContent = '✅ Confirmar e Entrar';
+                errorDiv.textContent = 'Erro ao verificar e-mail. Tente novamente.';
+                errorDiv.classList.add('show');
+                console.error('Email confirmation error:', error);
             }
+        }
+
+        // Função antiga (mantida para compatibilidade, mas não será mais usada)
+        async function confirmActivation() {
+            confirmEmailAndActivate();
         }
 
         // Quando recusa o benefício
